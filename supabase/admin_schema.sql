@@ -17,13 +17,13 @@ CREATE TABLE admin_users (
   email TEXT UNIQUE NOT NULL,
   role admin_role NOT NULL DEFAULT 'moderator',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_by UUID, -- which admin created this admin (FK added below)
+  created_by UUID, -- which admin created this admin, FK added below
   last_login_at TIMESTAMP WITH TIME ZONE,
   is_active BOOLEAN DEFAULT TRUE,
   two_factor_enabled BOOLEAN DEFAULT FALSE,
   two_factor_secret TEXT, -- TOTP secret for 2FA
   ip_allowlist TEXT[], -- optional IP restrictions for super admins
-  metadata JSONB DEFAULT '{}'::JSONB -- additional data (phone, notes, etc)
+  metadata JSONB DEFAULT '{}'::JSONB -- additional data like phone, notes, etc
 );
 
 -- Add self-referencing foreign key constraint after table creation
@@ -108,7 +108,7 @@ CREATE TABLE moderation_actions (
   target_content_id UUID, -- generic ID for photos, messages, etc
   reason TEXT, -- reason provided by admin
   notes TEXT, -- additional admin notes
-  metadata JSONB DEFAULT '{}'::JSONB, -- flexible data (duration, old_value, new_value, etc)
+  metadata JSONB DEFAULT '{}'::JSONB, -- flexible data like duration, old_value, new_value, etc
   ip_address INET,
   result TEXT DEFAULT 'success' -- success, failed, partial
 );
@@ -163,8 +163,8 @@ CREATE TABLE photo_moderation_queue (
   reviewed_by UUID REFERENCES admin_users(id),
   reviewed_at TIMESTAMP WITH TIME ZONE,
   rejection_reason TEXT,
-  ai_moderation_score NUMERIC(3,2), -- 0.00 to 1.00 (from AWS Rekognition)
-  ai_flags TEXT[], -- array of detected issues (nudity, violence, etc)
+  ai_moderation_score NUMERIC(3,2), -- 0.00 to 1.00 from AWS Rekognition
+  ai_flags TEXT[], -- array of detected issues like nudity, violence, etc
   notes TEXT
 );
 
@@ -349,7 +349,7 @@ CREATE TYPE flag_status AS ENUM ('pending', 'reviewed', 'dismissed', 'actioned')
 
 CREATE TABLE content_moderation_flags (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  content_id UUID NOT NULL, -- generic ID (photo_id, message_id, etc)
+  content_id UUID NOT NULL, -- generic ID like photo_id, message_id, etc
   content_type content_type NOT NULL,
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   flag_type flag_type NOT NULL,
