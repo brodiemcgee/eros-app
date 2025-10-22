@@ -9,6 +9,7 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -40,21 +41,32 @@ export const OnboardingProfileScreen: React.FC = () => {
     }
   };
 
+  const showError = (message: string) => {
+    console.error('Validation error:', message);
+    if (Platform.OS === 'web') {
+      alert(message);
+    } else {
+      Alert.alert('Error', message);
+    }
+  };
+
   const handleComplete = async () => {
+    console.log('Complete profile clicked', { displayName, dateOfBirth, hasPhoto: !!photoUri });
+
     if (!displayName.trim()) {
-      Alert.alert('Error', 'Please enter your display name');
+      showError('Please enter your display name');
       return;
     }
 
     if (!dateOfBirth) {
-      Alert.alert('Error', 'Please enter your date of birth');
+      showError('Please enter your date of birth');
       return;
     }
 
     // Validate date format (YYYY-MM-DD)
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(dateOfBirth)) {
-      Alert.alert('Error', 'Please enter date in YYYY-MM-DD format (e.g., 1990-01-15)');
+      showError('Please enter date in YYYY-MM-DD format (e.g., 1990-01-15)');
       return;
     }
 
@@ -66,16 +78,17 @@ export const OnboardingProfileScreen: React.FC = () => {
 
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       if (age - 1 < 18) {
-        Alert.alert('Error', 'You must be at least 18 years old to use Eros');
+        showError('You must be at least 18 years old to use Eros');
         return;
       }
     } else if (age < 18) {
-      Alert.alert('Error', 'You must be at least 18 years old to use Eros');
+      showError('You must be at least 18 years old to use Eros');
       return;
     }
 
-    if (!photoUri) {
-      Alert.alert('Error', 'Please upload at least one photo');
+    // Make photo optional for web (image picker might not work)
+    if (!photoUri && Platform.OS !== 'web') {
+      showError('Please upload at least one photo');
       return;
     }
 
@@ -84,19 +97,27 @@ export const OnboardingProfileScreen: React.FC = () => {
     setLoading(true);
 
     try {
-      // Get location
-      const coords = await getCurrentLocation();
+      console.log('Creating profile...');
+
+      // Get location (skip on web if it fails)
+      let coords = null;
       let city = null;
       let country = null;
 
-      if (coords) {
-        const location = await reverseGeocode(coords);
-        city = location.city;
-        country = location.country;
-        await updateUserLocation(coords);
+      try {
+        coords = await getCurrentLocation();
+        if (coords) {
+          const location = await reverseGeocode(coords);
+          city = location.city;
+          country = location.country;
+          await updateUserLocation(coords);
+        }
+      } catch (locError) {
+        console.warn('Location fetch failed, continuing without location:', locError);
       }
 
       // Create profile
+      console.log('Inserting profile into database...');
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -108,22 +129,40 @@ export const OnboardingProfileScreen: React.FC = () => {
           country,
         });
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        throw profileError;
+      }
 
-      // Upload photo
-      const { url } = await uploadProfilePhoto(user.id, photoUri, 0);
+      console.log('Profile created successfully');
 
-      // Add photo to database
-      await addProfilePhoto(user.id, url, 0, true);
+      // Upload photo if provided
+      if (photoUri) {
+        try {
+          console.log('Uploading photo...');
+          const { url } = await uploadProfilePhoto(user.id, photoUri, 0);
+          await addProfilePhoto(user.id, url, 0, true);
+          console.log('Photo uploaded successfully');
+        } catch (photoError) {
+          console.warn('Photo upload failed, continuing without photo:', photoError);
+        }
+      }
 
       // Refresh profile in context
+      console.log('Refreshing profile...');
       await refreshProfile();
 
+      console.log('Profile setup complete, navigating to MainTabs');
       // Navigate to main app
       navigation.replace('MainTabs');
     } catch (error: any) {
       console.error('Error creating profile:', error);
-      Alert.alert('Error', error.message || 'Failed to create profile');
+      const msg = error.message || 'Failed to create profile';
+      if (Platform.OS === 'web') {
+        alert('Error: ' + msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
     } finally {
       setLoading(false);
     }
