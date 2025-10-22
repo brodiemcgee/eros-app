@@ -240,3 +240,70 @@ export const deleteMessage = async (messageId: string): Promise<void> => {
     console.error('Error deleting message:', error);
   }
 };
+
+// Start typing indicator
+export const startTyping = async (
+  conversationId: string,
+  userId: string
+): Promise<void> => {
+  const { error } = await supabase
+    .from('typing_indicators')
+    .upsert({
+      conversation_id: conversationId,
+      user_id: userId,
+      is_typing: true,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'conversation_id,user_id'
+    });
+
+  if (error) {
+    console.error('Error starting typing indicator:', error);
+  }
+};
+
+// Stop typing indicator
+export const stopTyping = async (
+  conversationId: string,
+  userId: string
+): Promise<void> => {
+  const { error } = await supabase
+    .from('typing_indicators')
+    .delete()
+    .eq('conversation_id', conversationId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Error stopping typing indicator:', error);
+  }
+};
+
+// Subscribe to typing indicators for a conversation
+export const subscribeToTypingIndicators = (
+  conversationId: string,
+  currentUserId: string,
+  onTypingChange: (isTyping: boolean) => void
+): RealtimeChannel => {
+  const channel = supabase
+    .channel(`typing:${conversationId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'typing_indicators',
+        filter: `conversation_id=eq.${conversationId}`,
+      },
+      async (payload) => {
+        // Only care about other user's typing status
+        if (payload.new && (payload.new as any).user_id !== currentUserId) {
+          onTypingChange((payload.new as any).is_typing);
+        } else if (payload.eventType === 'DELETE' && (payload.old as any).user_id !== currentUserId) {
+          onTypingChange(false);
+        }
+      }
+    )
+    .subscribe();
+
+  return channel;
+};

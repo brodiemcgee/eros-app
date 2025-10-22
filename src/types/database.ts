@@ -177,6 +177,15 @@ export interface Report {
   is_resolved: boolean;
 }
 
+export interface SavedPhrase {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  phrase_text: string;
+  display_order: number;
+}
+
 export interface Tribe {
   id: string;
   created_at: string;

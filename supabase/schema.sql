@@ -194,6 +194,39 @@ CREATE TABLE messages (
   CONSTRAINT has_content CHECK (content IS NOT NULL OR media_url IS NOT NULL)
 );
 
+-- Typing indicators (for real-time "user is typing..." feature)
+CREATE TABLE typing_indicators (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+  conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+
+  is_typing BOOLEAN DEFAULT TRUE,
+
+  UNIQUE(conversation_id, user_id)
+);
+
+-- Create index for faster typing indicator queries
+CREATE INDEX idx_typing_indicators_conversation ON typing_indicators(conversation_id) WHERE is_typing = TRUE;
+
+-- Saved phrases (quick replies)
+CREATE TABLE saved_phrases (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  phrase_text TEXT NOT NULL,
+  display_order INTEGER DEFAULT 0,
+
+  CONSTRAINT non_empty_phrase CHECK (LENGTH(TRIM(phrase_text)) > 0)
+);
+
+-- Create index for user's saved phrases
+CREATE INDEX idx_saved_phrases_user ON saved_phrases(user_id, display_order);
+
 -- Favorites
 CREATE TABLE favorites (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -474,6 +507,36 @@ CREATE POLICY "Users can send messages"
 CREATE POLICY "Users can delete own messages"
   ON messages FOR UPDATE
   USING (auth.uid() = sender_id);
+
+-- Typing Indicators
+ALTER TABLE typing_indicators ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view typing indicators in their conversations"
+  ON typing_indicators FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM conversations
+      WHERE id = conversation_id
+      AND auth.uid() IN (participant1_id, participant2_id)
+    )
+  );
+
+CREATE POLICY "Users can manage own typing indicators"
+  ON typing_indicators FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Saved Phrases
+ALTER TABLE saved_phrases ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own saved phrases"
+  ON saved_phrases FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage own saved phrases"
+  ON saved_phrases FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 -- Favorites
 ALTER TABLE favorites ENABLE ROW LEVEL SECURITY;

@@ -22,10 +22,24 @@ import {
   blockUser,
   sendTap,
   recordProfileView,
+  getUserTribes,
 } from '../services/profiles';
 import { getOrCreateConversation } from '../services/messaging';
 import { ProfileWithPhotos } from '../types/database';
-import { calculateAge, formatHeight, formatWeight, formatLookingFor, formatRelativeTime } from '../utils/helpers';
+import {
+  calculateAge,
+  formatHeight,
+  formatWeight,
+  formatLookingFor,
+  formatRelativeTime,
+  formatPosition,
+  formatBodyHair,
+  formatHIVStatus,
+  formatSmoking,
+  formatDrinking,
+  formatLanguages,
+  formatMeetingPreferences,
+} from '../utils/helpers';
 
 type ProfileDetailRouteProp = RouteProp<RootStackParamList, 'ProfileDetail'>;
 type ProfileDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProfileDetail'>;
@@ -38,6 +52,7 @@ export const ProfileDetailScreen: React.FC = () => {
   const [profile, setProfile] = useState<ProfileWithPhotos | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
+  const [tribes, setTribes] = useState<any[]>([]);
 
   useEffect(() => {
     loadProfile();
@@ -46,6 +61,12 @@ export const ProfileDetailScreen: React.FC = () => {
   const loadProfile = async () => {
     const profileData = await getProfileById(route.params.profileId);
     setProfile(profileData);
+
+    if (profileData) {
+      const userTribes = await getUserTribes(profileData.id);
+      setTribes(userTribes);
+    }
+
     setLoading(false);
 
     if (user && profileData) {
@@ -192,6 +213,91 @@ export const ProfileDetailScreen: React.FC = () => {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Looking For</Text>
               <Text style={styles.sectionContent}>{formatLookingFor(profile.looking_for)}</Text>
+            </View>
+          )}
+
+          {tribes.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Tribes</Text>
+              <View style={styles.tribesContainer}>
+                {tribes.map((tribe: any) => (
+                  <View key={tribe.id} style={styles.tribeTag}>
+                    <Text style={styles.tribeText}>
+                      {tribe.icon} {tribe.name}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View style={styles.statsContainer}>
+            {profile.position && (
+              <View style={styles.stat}>
+                <Text style={styles.statLabel}>Position</Text>
+                <Text style={styles.statValue}>{formatPosition(profile.position)}</Text>
+              </View>
+            )}
+            {profile.body_hair && (
+              <View style={styles.stat}>
+                <Text style={styles.statLabel}>Body Hair</Text>
+                <Text style={styles.statValue}>{formatBodyHair(profile.body_hair)}</Text>
+              </View>
+            )}
+            {profile.ethnicity && (
+              <View style={styles.stat}>
+                <Text style={styles.statLabel}>Ethnicity</Text>
+                <Text style={styles.statValue}>{profile.ethnicity}</Text>
+              </View>
+            )}
+          </View>
+
+          {profile.pronouns && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Pronouns</Text>
+              <Text style={styles.sectionContent}>{profile.pronouns}</Text>
+            </View>
+          )}
+
+          {profile.hiv_status && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Sexual Health</Text>
+              <Text style={styles.sectionContent}>
+                HIV Status: {formatHIVStatus(profile.hiv_status)}
+                {profile.hiv_last_tested && ` • Last tested: ${new Date(profile.hiv_last_tested).toLocaleDateString()}`}
+                {profile.on_prep && ' • On PrEP'}
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.statsContainer}>
+            {profile.smoking && (
+              <View style={styles.stat}>
+                <Text style={styles.statLabel}>Smoking</Text>
+                <Text style={styles.statValue}>{formatSmoking(profile.smoking)}</Text>
+              </View>
+            )}
+            {profile.drinking && (
+              <View style={styles.stat}>
+                <Text style={styles.statLabel}>Drinking</Text>
+                <Text style={styles.statValue}>{formatDrinking(profile.drinking)}</Text>
+              </View>
+            )}
+          </View>
+
+          {profile.languages && profile.languages.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Languages</Text>
+              <Text style={styles.sectionContent}>{formatLanguages(profile.languages)}</Text>
+            </View>
+          )}
+
+          {(profile.can_host || profile.can_travel || profile.available_now) && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Meeting</Text>
+              <Text style={styles.sectionContent}>
+                {formatMeetingPreferences(profile.can_host, profile.can_travel, profile.available_now).join(' • ')}
+              </Text>
             </View>
           )}
 
@@ -394,5 +500,22 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: FONT_SIZES.md,
     color: COLORS.error,
+  },
+  tribesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: SPACING.xs,
+  },
+  tribeTag: {
+    backgroundColor: COLORS.backgroundTertiary,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.md,
+    marginRight: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+  tribeText: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.text,
   },
 });
