@@ -23,7 +23,7 @@ CREATE TABLE admin_users (
   two_factor_enabled BOOLEAN DEFAULT FALSE,
   two_factor_secret TEXT, -- TOTP secret for 2FA
   ip_allowlist TEXT[], -- optional IP restrictions for super admins
-  metadata JSONB DEFAULT '{}'::JSONB -- additional data like phone, notes, etc
+  metadata JSONB DEFAULT '{}'::JSONB -- additional data like phone and notes
 );
 
 -- Add self-referencing foreign key constraint after table creation
@@ -105,10 +105,10 @@ CREATE TABLE moderation_actions (
   admin_id UUID NOT NULL REFERENCES admin_users(id),
   action_type moderation_action_type NOT NULL,
   target_user_id UUID REFERENCES profiles(id) ON DELETE SET NULL, -- user being moderated
-  target_content_id UUID, -- generic ID for photos, messages, etc
+  target_content_id UUID, -- generic ID for photos or messages
   reason TEXT, -- reason provided by admin
   notes TEXT, -- additional admin notes
-  metadata JSONB DEFAULT '{}'::JSONB, -- flexible data like duration, old_value, new_value, etc
+  metadata JSONB DEFAULT '{}'::JSONB, -- flexible data like duration and old/new values
   ip_address INET,
   result TEXT DEFAULT 'success' -- success, failed, partial
 );
@@ -164,7 +164,7 @@ CREATE TABLE photo_moderation_queue (
   reviewed_at TIMESTAMP WITH TIME ZONE,
   rejection_reason TEXT,
   ai_moderation_score NUMERIC(3,2), -- 0.00 to 1.00 from AWS Rekognition
-  ai_flags TEXT[], -- array of detected issues like nudity, violence, etc
+  ai_flags TEXT[], -- array of detected issues like nudity or violence
   notes TEXT
 );
 
@@ -282,7 +282,7 @@ CREATE TABLE age_verification_requests (
   reviewed_at TIMESTAMP WITH TIME ZONE,
   rejection_reason TEXT,
   notes TEXT,
-  metadata JSONB DEFAULT '{}'::JSONB -- store OCR data, third-party response, etc
+  metadata JSONB DEFAULT '{}'::JSONB -- store OCR data and third-party responses
 );
 
 CREATE INDEX idx_age_verification_user ON age_verification_requests(user_id);
@@ -349,7 +349,7 @@ CREATE TYPE flag_status AS ENUM ('pending', 'reviewed', 'dismissed', 'actioned')
 
 CREATE TABLE content_moderation_flags (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  content_id UUID NOT NULL, -- generic ID like photo_id, message_id, etc
+  content_id UUID NOT NULL, -- generic ID like photo_id or message_id
   content_type content_type NOT NULL,
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   flag_type flag_type NOT NULL,
@@ -359,7 +359,7 @@ CREATE TABLE content_moderation_flags (
   status flag_status NOT NULL DEFAULT 'pending',
   reviewed_by UUID REFERENCES admin_users(id),
   reviewed_at TIMESTAMP WITH TIME ZONE,
-  action_taken TEXT, -- 'deleted', 'warned', 'dismissed', etc
+  action_taken TEXT, -- deleted, warned, or dismissed
   notes TEXT
 );
 
