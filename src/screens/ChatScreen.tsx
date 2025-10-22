@@ -386,13 +386,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: SPACING.md,
-    backgroundColor: COLORS.backgroundSecondary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    paddingTop: SPACING.xl,
+    backgroundColor: COLORS.background,
   },
   backButton: {
     fontSize: FONT_SIZES.xl,
-    color: COLORS.primary,
+    color: COLORS.text,
   },
   headerTitle: {
     fontSize: FONT_SIZES.lg,
@@ -413,14 +412,17 @@ const styles = StyleSheet.create({
   },
   messageBubble: {
     maxWidth: '75%',
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: BORDER_RADIUS.lg,
   },
   myMessageBubble: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary, // Purple for sent messages
+    borderBottomRightRadius: 4,
   },
   otherMessageBubble: {
-    backgroundColor: COLORS.backgroundTertiary,
+    backgroundColor: COLORS.backgroundTertiary, // Light gray for received
+    borderBottomLeftRadius: 4,
   },
   messageText: {
     fontSize: FONT_SIZES.md,
@@ -464,7 +466,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     padding: SPACING.md,
-    backgroundColor: COLORS.backgroundSecondary,
+    backgroundColor: COLORS.background,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     alignItems: 'center',
@@ -478,18 +480,21 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: COLORS.backgroundTertiary,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.backgroundSecondary,
+    borderRadius: BORDER_RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     padding: SPACING.sm,
+    paddingHorizontal: SPACING.md,
     marginRight: SPACING.sm,
     fontSize: FONT_SIZES.md,
     color: COLORS.text,
     maxHeight: 100,
   },
   sendButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.md,
-    paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.secondary, // Teal for send button
+    borderRadius: BORDER_RADIUS.pill,
+    paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
   },
   sendButtonDisabled: {

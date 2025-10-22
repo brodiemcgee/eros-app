@@ -14,7 +14,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../contexts/AuthContext';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../utils/theme';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../utils/theme';
 import { ProfileWithDistance } from '../types/database';
 import { getNearbyProfiles, updateOnlineStatus } from '../services/profiles';
 import { getCurrentLocation } from '../services/location';
@@ -256,15 +256,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: SPACING.md,
-    backgroundColor: COLORS.backgroundSecondary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    padding: SPACING.lg,
+    paddingTop: SPACING.xl,
+    backgroundColor: COLORS.background,
   },
   headerTitle: {
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xxxl,
     fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.primary,
+    color: COLORS.text,
+    fontFamily: "'Playfair Display', Georgia, serif",
   },
   headerActions: {
     flexDirection: 'row',
@@ -273,8 +273,10 @@ const styles = StyleSheet.create({
   viewModeButton: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.backgroundTertiary,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.backgroundSecondary,
+    borderRadius: BORDER_RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   viewModeIcon: {
     fontSize: FONT_SIZES.lg,
@@ -283,8 +285,10 @@ const styles = StyleSheet.create({
   filterButton: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.backgroundTertiary,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.backgroundSecondary,
+    borderRadius: BORDER_RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   filterButtonText: {
     color: COLORS.text,
@@ -292,40 +296,43 @@ const styles = StyleSheet.create({
   },
   filterTabs: {
     flexDirection: 'row',
-    backgroundColor: COLORS.backgroundSecondary,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.background,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    gap: SPACING.sm,
   },
   filterTab: {
-    flex: 1,
+    paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
     alignItems: 'center',
-    borderRadius: BORDER_RADIUS.md,
-    marginHorizontal: SPACING.xs,
+    borderRadius: BORDER_RADIUS.pill,
+    backgroundColor: COLORS.text, // Black background for pills
+    borderWidth: 1,
+    borderColor: COLORS.text,
   },
   filterTabActive: {
     backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
   filterTabText: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
+    color: COLORS.background, // White text
     fontWeight: FONT_WEIGHTS.medium as any,
   },
   filterTabTextActive: {
-    color: COLORS.background,
-    fontWeight: FONT_WEIGHTS.bold as any,
+    color: COLORS.background, // Stay white
+    fontWeight: FONT_WEIGHTS.semibold as any,
   },
   gridContainer: {
-    padding: SPACING.sm,
+    padding: SPACING.md,
   },
   profileCard: {
     flex: 1,
     margin: SPACING.sm,
-    backgroundColor: COLORS.backgroundSecondary,
-    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: BORDER_RADIUS.md,
     overflow: 'hidden',
+    ...SHADOWS.card,
   },
   cascadeCard: {
     flexDirection: 'row',

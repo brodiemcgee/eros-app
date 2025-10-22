@@ -14,14 +14,18 @@ export const MainTabNavigator: React.FC = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textMuted,
+        tabBarActiveTintColor: '#FFFFFF', // White for active
+        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)', // White with 50% opacity for inactive
         tabBarStyle: {
-          backgroundColor: COLORS.backgroundSecondary,
-          borderTopColor: COLORS.border,
+          backgroundColor: COLORS.primary, // Purple background
+          borderTopColor: COLORS.primary, // No visible border
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
           fontSize: FONT_SIZES.xs,
+          fontWeight: '500',
         },
       }}
     >
@@ -29,28 +33,60 @@ export const MainTabNavigator: React.FC = () => {
         name="Explore"
         component={ExploreScreen}
         options={{
-          tabBarIcon: ({ color }) => <span style={{ fontSize: 24 }}>🔍</span>,
+          tabBarIcon: ({ color, focused }) => (
+            <span style={{
+              fontSize: 24,
+              opacity: focused ? 1 : 0.5,
+              filter: 'brightness(0) invert(1)' // Makes icons white
+            }}>
+              🔍
+            </span>
+          ),
         }}
       />
       <Tab.Screen
         name="Favorites"
         component={FavoritesScreen}
         options={{
-          tabBarIcon: ({ color }) => <span style={{ fontSize: 24 }}>⭐</span>,
+          tabBarIcon: ({ color, focused }) => (
+            <span style={{
+              fontSize: 24,
+              opacity: focused ? 1 : 0.5,
+              filter: 'brightness(0) invert(1)'
+            }}>
+              ⭐
+            </span>
+          ),
         }}
       />
       <Tab.Screen
         name="Messages"
         component={MessagesScreen}
         options={{
-          tabBarIcon: ({ color }) => <span style={{ fontSize: 24 }}>💬</span>,
+          tabBarIcon: ({ color, focused }) => (
+            <span style={{
+              fontSize: 24,
+              opacity: focused ? 1 : 0.5,
+              filter: 'brightness(0) invert(1)'
+            }}>
+              💬
+            </span>
+          ),
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({ color }) => <span style={{ fontSize: 24 }}>👤</span>,
+          tabBarIcon: ({ color, focused }) => (
+            <span style={{
+              fontSize: 24,
+              opacity: focused ? 1 : 0.5,
+              filter: 'brightness(0) invert(1)'
+            }}>
+              👤
+            </span>
+          ),
         }}
       />
     </Tab.Navigator>
