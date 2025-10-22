@@ -23,7 +23,7 @@ CREATE TABLE admin_users (
   two_factor_enabled BOOLEAN DEFAULT FALSE,
   two_factor_secret TEXT, -- TOTP secret for 2FA
   ip_allowlist TEXT[], -- optional IP restrictions for super admins
-  metadata JSONB DEFAULT '{}'::JSONB -- additional data like phone and notes
+  metadata JSONB DEFAULT '{}'::JSONB -- additional profile metadata
 );
 
 -- Add self-referencing foreign key constraint after table creation
@@ -107,8 +107,8 @@ CREATE TABLE moderation_actions (
   target_user_id UUID REFERENCES profiles(id) ON DELETE SET NULL, -- user being moderated
   target_content_id UUID, -- generic ID for photos or messages
   reason TEXT, -- reason provided by admin
-  notes TEXT, -- additional admin notes
-  metadata JSONB DEFAULT '{}'::JSONB, -- flexible data like duration and old/new values
+  notes TEXT, -- additional admin information
+  metadata JSONB DEFAULT '{}'::JSONB, -- flexible additional data
   ip_address INET,
   result TEXT DEFAULT 'success' -- success, failed, partial
 );
@@ -282,7 +282,7 @@ CREATE TABLE age_verification_requests (
   reviewed_at TIMESTAMP WITH TIME ZONE,
   rejection_reason TEXT,
   notes TEXT,
-  metadata JSONB DEFAULT '{}'::JSONB -- store OCR data and third-party responses
+  metadata JSONB DEFAULT '{}'::JSONB -- verification metadata
 );
 
 CREATE INDEX idx_age_verification_user ON age_verification_requests(user_id);
