@@ -1,23 +1,90 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert, Switch } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../utils/theme';
-import { updateProfile } from '../services/profiles';
+import { updateProfile, getUserTribes, setUserTribes } from '../services/profiles';
+import { TribeSelector } from '../components/TribeSelector';
+import { BodyHair, HIVStatus, Position, Smoking, Drinking } from '../types/database';
 
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const { profile, refreshProfile } = useAuth();
 
+  // Basic info
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
   const [bio, setBio] = useState(profile?.bio || '');
+
+  // Physical attributes
+  const [heightCm, setHeightCm] = useState(profile?.height_cm?.toString() || '');
+  const [weightKg, setWeightKg] = useState(profile?.weight_kg?.toString() || '');
+  const [bodyType, setBodyType] = useState(profile?.body_type || '');
+  const [ethnicity, setEthnicity] = useState(profile?.ethnicity || '');
+
+  // Identity
+  const [pronouns, setPronouns] = useState(profile?.pronouns || '');
+
+  // Preferences
+  const [position, setPosition] = useState<Position | null>(profile?.position || null);
+  const [bodyHair, setBodyHair] = useState<BodyHair | null>(profile?.body_hair || null);
+  const [smoking, setSmoking] = useState<Smoking | null>(profile?.smoking || null);
+  const [drinking, setDrinking] = useState<Drinking | null>(profile?.drinking || null);
+
+  // Sexual health
+  const [hivStatus, setHivStatus] = useState<HIVStatus | null>(profile?.hiv_status || null);
+  const [onPrep, setOnPrep] = useState(profile?.on_prep || false);
+
+  // Meeting preferences
+  const [canHost, setCanHost] = useState(profile?.can_host || false);
+  const [canTravel, setCanTravel] = useState(profile?.can_travel || false);
+  const [availableNow, setAvailableNow] = useState(profile?.available_now || false);
+
+  // Tribes
+  const [selectedTribeIds, setSelectedTribeIds] = useState<string[]>([]);
+
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadUserTribes();
+  }, []);
+
+  const loadUserTribes = async () => {
+    if (!profile) return;
+    const tribes = await getUserTribes(profile.id);
+    setSelectedTribeIds(tribes.map(t => t.id));
+  };
 
   const handleSave = async () => {
     if (!profile) return;
 
     setLoading(true);
-    const success = await updateProfile(profile.id, { display_name: displayName, bio });
+
+    const updates: any = {
+      display_name: displayName,
+      bio: bio || null,
+      height_cm: heightCm ? parseInt(heightCm) : null,
+      weight_kg: weightKg ? parseInt(weightKg) : null,
+      body_type: bodyType || null,
+      ethnicity: ethnicity || null,
+      pronouns: pronouns || null,
+      position: position,
+      body_hair: bodyHair,
+      smoking: smoking,
+      drinking: drinking,
+      hiv_status: hivStatus,
+      on_prep: onPrep,
+      can_host: canHost,
+      can_travel: canTravel,
+      available_now: availableNow,
+    };
+
+    const success = await updateProfile(profile.id, updates);
+
+    // Update tribes
+    if (success) {
+      await setUserTribes(profile.id, selectedTribeIds);
+    }
+
     setLoading(false);
 
     if (success) {
@@ -28,6 +95,38 @@ export const EditProfileScreen: React.FC = () => {
       Alert.alert('Error', 'Failed to update profile');
     }
   };
+
+  const renderPicker = (
+    label: string,
+    value: string | null,
+    options: { label: string; value: string }[],
+    onChange: (value: any) => void
+  ) => (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.pickerContainer}>
+        {options.map((option) => (
+          <TouchableOpacity
+            key={option.value}
+            style={[
+              styles.pickerOption,
+              value === option.value && styles.pickerOptionSelected,
+            ]}
+            onPress={() => onChange(option.value)}
+          >
+            <Text
+              style={[
+                styles.pickerOptionText,
+                value === option.value && styles.pickerOptionTextSelected,
+              ]}
+            >
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
 
   return (
     <ScrollView style={styles.container}>
@@ -40,12 +139,17 @@ export const EditProfileScreen: React.FC = () => {
       </View>
 
       <View style={styles.form}>
+        {/* Basic Info */}
+        <Text style={styles.sectionTitle}>Basic Information</Text>
+
         <Text style={styles.label}>Display Name</Text>
         <TextInput
           style={styles.input}
           value={displayName}
           onChangeText={setDisplayName}
           editable={!loading}
+          placeholder="Your display name"
+          placeholderTextColor={COLORS.textMuted}
         />
 
         <Text style={styles.label}>Bio</Text>
@@ -56,14 +160,172 @@ export const EditProfileScreen: React.FC = () => {
           multiline
           numberOfLines={4}
           editable={!loading}
+          placeholder="Tell us about yourself..."
+          placeholderTextColor={COLORS.textMuted}
         />
+
+        {/* Physical Attributes */}
+        <Text style={styles.sectionTitle}>Physical Attributes</Text>
+
+        <View style={styles.row}>
+          <View style={styles.halfWidth}>
+            <Text style={styles.label}>Height (cm)</Text>
+            <TextInput
+              style={styles.input}
+              value={heightCm}
+              onChangeText={setHeightCm}
+              keyboardType="numeric"
+              placeholder="175"
+              placeholderTextColor={COLORS.textMuted}
+              editable={!loading}
+            />
+          </View>
+          <View style={styles.halfWidth}>
+            <Text style={styles.label}>Weight (kg)</Text>
+            <TextInput
+              style={styles.input}
+              value={weightKg}
+              onChangeText={setWeightKg}
+              keyboardType="numeric"
+              placeholder="70"
+              placeholderTextColor={COLORS.textMuted}
+              editable={!loading}
+            />
+          </View>
+        </View>
+
+        <Text style={styles.label}>Body Type</Text>
+        <TextInput
+          style={styles.input}
+          value={bodyType}
+          onChangeText={setBodyType}
+          placeholder="e.g., Athletic, Average, Slim"
+          placeholderTextColor={COLORS.textMuted}
+          editable={!loading}
+        />
+
+        <Text style={styles.label}>Ethnicity</Text>
+        <TextInput
+          style={styles.input}
+          value={ethnicity}
+          onChangeText={setEthnicity}
+          placeholder="Your ethnicity"
+          placeholderTextColor={COLORS.textMuted}
+          editable={!loading}
+        />
+
+        {/* Identity */}
+        <Text style={styles.sectionTitle}>Identity</Text>
+
+        <Text style={styles.label}>Pronouns</Text>
+        <TextInput
+          style={styles.input}
+          value={pronouns}
+          onChangeText={setPronouns}
+          placeholder="e.g., he/him, they/them"
+          placeholderTextColor={COLORS.textMuted}
+          editable={!loading}
+        />
+
+        {/* Preferences */}
+        <Text style={styles.sectionTitle}>Preferences</Text>
+
+        {renderPicker('Position', position, [
+          { label: 'Top', value: 'top' },
+          { label: 'Bottom', value: 'bottom' },
+          { label: 'Versatile', value: 'versatile' },
+          { label: 'Side', value: 'side' },
+        ], setPosition)}
+
+        {renderPicker('Body Hair', bodyHair, [
+          { label: 'None', value: 'none' },
+          { label: 'Light', value: 'light' },
+          { label: 'Moderate', value: 'moderate' },
+          { label: 'Heavy', value: 'heavy' },
+          { label: 'Natural', value: 'natural' },
+        ], setBodyHair)}
+
+        {renderPicker('Smoking', smoking, [
+          { label: 'No', value: 'no' },
+          { label: 'Occasionally', value: 'occasionally' },
+          { label: 'Regularly', value: 'regularly' },
+        ], setSmoking)}
+
+        {renderPicker('Drinking', drinking, [
+          { label: 'No', value: 'no' },
+          { label: 'Occasionally', value: 'occasionally' },
+          { label: 'Socially', value: 'socially' },
+          { label: 'Regularly', value: 'regularly' },
+        ], setDrinking)}
+
+        {/* Sexual Health */}
+        <Text style={styles.sectionTitle}>Sexual Health</Text>
+
+        {renderPicker('HIV Status', hivStatus, [
+          { label: 'Negative', value: 'negative' },
+          { label: 'Positive', value: 'positive' },
+          { label: 'Unknown', value: 'unknown' },
+        ], setHivStatus)}
+
+        <View style={styles.switchRow}>
+          <Text style={styles.label}>On PrEP</Text>
+          <Switch
+            value={onPrep}
+            onValueChange={setOnPrep}
+            trackColor={{ false: COLORS.border, true: COLORS.primary }}
+            thumbColor={COLORS.text}
+          />
+        </View>
+
+        {/* Meeting Preferences */}
+        <Text style={styles.sectionTitle}>Meeting Preferences</Text>
+
+        <View style={styles.switchRow}>
+          <Text style={styles.label}>Can Host</Text>
+          <Switch
+            value={canHost}
+            onValueChange={setCanHost}
+            trackColor={{ false: COLORS.border, true: COLORS.primary }}
+            thumbColor={COLORS.text}
+          />
+        </View>
+
+        <View style={styles.switchRow}>
+          <Text style={styles.label}>Can Travel</Text>
+          <Switch
+            value={canTravel}
+            onValueChange={setCanTravel}
+            trackColor={{ false: COLORS.border, true: COLORS.primary }}
+            thumbColor={COLORS.text}
+          />
+        </View>
+
+        <View style={styles.switchRow}>
+          <Text style={styles.label}>Available Now</Text>
+          <Switch
+            value={availableNow}
+            onValueChange={setAvailableNow}
+            trackColor={{ false: COLORS.border, true: COLORS.primary }}
+            thumbColor={COLORS.text}
+          />
+        </View>
+
+        {/* Tribes */}
+        <Text style={styles.sectionTitle}>Tribes</Text>
+        {profile && (
+          <TribeSelector
+            selectedTribeIds={selectedTribeIds}
+            onSelectionChange={setSelectedTribeIds}
+            maxSelection={5}
+          />
+        )}
 
         <TouchableOpacity
           style={[styles.saveButton, loading && styles.saveButtonDisabled]}
           onPress={handleSave}
           disabled={loading}
         >
-          <Text style={styles.saveButtonText}>Save Changes</Text>
+          <Text style={styles.saveButtonText}>{loading ? 'Saving...' : 'Save Changes'}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -96,6 +358,13 @@ const styles = StyleSheet.create({
   form: {
     padding: SPACING.lg,
   },
+  sectionTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: FONT_WEIGHTS.bold as any,
+    color: COLORS.text,
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.md,
+  },
   label: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
@@ -116,12 +385,57 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  halfWidth: {
+    width: '48%',
+  },
+  fieldContainer: {
+    marginBottom: SPACING.md,
+  },
+  pickerContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: SPACING.xs,
+  },
+  pickerOption: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.backgroundSecondary,
+    borderRadius: BORDER_RADIUS.round,
+    marginRight: SPACING.xs,
+    marginBottom: SPACING.xs,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+  },
+  pickerOptionSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  pickerOptionText: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.text,
+  },
+  pickerOptionTextSelected: {
+    color: COLORS.background,
+    fontWeight: FONT_WEIGHTS.bold as any,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
   saveButton: {
     backgroundColor: COLORS.primary,
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.md,
     alignItems: 'center',
-    marginTop: SPACING.lg,
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.xxl,
   },
   saveButtonDisabled: {
     opacity: 0.6,
