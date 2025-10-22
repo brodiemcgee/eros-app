@@ -24,12 +24,15 @@ export const supabase = createClient<Database>(
 
 // Helper function to get the current user's profile
 export const getCurrentUserProfile = async () => {
+  console.log('[getCurrentUserProfile] Fetching current user...');
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
+    console.log('[getCurrentUserProfile] No user found');
     return null;
   }
 
+  console.log('[getCurrentUserProfile] User found:', user.id, 'Fetching profile...');
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('*, photos:profile_photos(*)')
@@ -37,10 +40,11 @@ export const getCurrentUserProfile = async () => {
     .single();
 
   if (error) {
-    console.error('Error fetching user profile:', error);
+    console.error('[getCurrentUserProfile] Error fetching profile:', error);
     return null;
   }
 
+  console.log('[getCurrentUserProfile] Profile fetched successfully:', profile?.display_name);
   return profile;
 };
 

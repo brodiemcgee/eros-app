@@ -29,12 +29,19 @@ export const LoginScreen: React.FC = () => {
 
   // Navigate after successful login when auth state updates
   useEffect(() => {
+    // Only navigate when we have a user AND auth is done loading
+    // This ensures profile has had time to load
     if (user && !authLoading) {
-      console.log('Auth state updated, user:', user.id, 'profile:', profile ? 'exists' : 'null');
+      console.log('Auth state updated, user:', user.id, 'profile:', profile ? 'exists' : 'null', 'authLoading:', authLoading);
+
+      // Give profile a moment to load if user just logged in
+      // Profile should be loaded by AuthContext when authLoading becomes false
       if (profile) {
         console.log('Navigating to MainTabs');
         navigation.replace('MainTabs');
       } else {
+        // Double-check: if we have a user but no profile after loading is done,
+        // they genuinely need onboarding
         console.log('Navigating to OnboardingProfile');
         navigation.replace('OnboardingProfile');
       }

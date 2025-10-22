@@ -55,12 +55,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadProfile = async () => {
     try {
+      console.log('[AuthContext] Loading profile...');
       const userProfile = await getCurrentUserProfile();
+      console.log('[AuthContext] Profile loaded:', userProfile ? 'Found profile' : 'No profile found');
+      if (userProfile) {
+        console.log('[AuthContext] Profile ID:', userProfile.id, 'Name:', userProfile.display_name);
+      }
       setProfile(userProfile as ProfileWithPhotos);
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error('[AuthContext] Error loading profile:', error);
+      setProfile(null);
     } finally {
       setLoading(false);
+      console.log('[AuthContext] Loading complete');
     }
   };
 
