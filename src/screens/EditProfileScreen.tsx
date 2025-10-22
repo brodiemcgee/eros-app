@@ -430,12 +430,14 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
   },
   saveButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
+    backgroundColor: COLORS.secondary, // Teal for primary CTA
+    borderRadius: BORDER_RADIUS.pill, // Pill-shaped like other CTAs
+    padding: SPACING.lg,
+    paddingVertical: SPACING.lg,
     alignItems: 'center',
     marginTop: SPACING.xl,
     marginBottom: SPACING.xxl,
+    ...SHADOWS.small,
   },
   saveButtonDisabled: {
     opacity: 0.6,
