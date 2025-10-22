@@ -30,45 +30,82 @@ export const SignupScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
+    console.log('Signup attempt:', { email });
+
     if (!email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      const msg = 'Please fill in all fields';
+      console.error('Validation error:', msg);
+      if (Platform.OS === 'web') {
+        alert(msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
       return;
     }
 
     if (!isValidEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      const msg = 'Please enter a valid email address';
+      console.error('Validation error:', msg);
+      if (Platform.OS === 'web') {
+        alert(msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
       return;
     }
 
     if (!isValidPassword(password)) {
-      Alert.alert('Error', 'Password must be at least 8 characters long');
+      const msg = 'Password must be at least 8 characters long';
+      console.error('Validation error:', msg);
+      if (Platform.OS === 'web') {
+        alert(msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      const msg = 'Passwords do not match';
+      console.error('Validation error:', msg);
+      if (Platform.OS === 'web') {
+        alert(msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
       return;
     }
 
     setLoading(true);
+    console.log('Calling signUp...');
 
     const { error } = await signUp(email.trim(), password);
 
     setLoading(false);
+    console.log('SignUp result:', { error: error?.message });
 
     if (error) {
-      Alert.alert('Error', error.message || 'Failed to create account');
+      const msg = error.message || 'Failed to create account';
+      console.error('Signup error:', msg);
+      if (Platform.OS === 'web') {
+        alert('Error: ' + msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
     } else {
-      Alert.alert(
-        'Success',
-        'Account created! Please check your email to verify your account.',
-        [
+      const msg = 'Account created! Please check your email to verify your account.';
+      console.log('Signup success:', msg);
+      if (Platform.OS === 'web') {
+        alert(msg);
+        navigation.navigate('Login');
+      } else {
+        Alert.alert('Success', msg, [
           {
             text: 'OK',
             onPress: () => navigation.navigate('Login'),
           },
-        ]
-      );
+        ]);
+      }
     }
   };
 

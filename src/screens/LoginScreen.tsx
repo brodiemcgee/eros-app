@@ -28,24 +28,48 @@ export const LoginScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    console.log('Login attempt:', { email });
+
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      const msg = 'Please fill in all fields';
+      console.error('Validation error:', msg);
+      if (Platform.OS === 'web') {
+        alert(msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
       return;
     }
 
     if (!isValidEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      const msg = 'Please enter a valid email address';
+      console.error('Validation error:', msg);
+      if (Platform.OS === 'web') {
+        alert(msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
       return;
     }
 
     setLoading(true);
+    console.log('Calling signIn...');
 
     const { error } = await signIn(email.trim(), password);
 
     setLoading(false);
+    console.log('SignIn result:', { error: error?.message });
 
     if (error) {
-      Alert.alert('Error', error.message || 'Failed to sign in');
+      const msg = error.message || 'Failed to sign in';
+      console.error('Login error:', msg);
+      if (Platform.OS === 'web') {
+        alert('Error: ' + msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
+    } else {
+      console.log('Login successful');
     }
   };
 

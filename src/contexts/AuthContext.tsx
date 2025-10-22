@@ -69,19 +69,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    return { error };
+    console.log('[AuthContext] signUp called:', { email });
+    try {
+      const result = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      console.log('[AuthContext] signUp result:', {
+        error: result.error?.message,
+        userId: result.data?.user?.id
+      });
+      return { error: result.error };
+    } catch (err) {
+      console.error('[AuthContext] signUp exception:', err);
+      return { error: err };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    console.log('[AuthContext] signIn called:', { email });
+    try {
+      const result = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      console.log('[AuthContext] signIn result:', {
+        error: result.error?.message,
+        userId: result.data?.user?.id
+      });
+      return { error: result.error };
+    } catch (err) {
+      console.error('[AuthContext] signIn exception:', err);
+      return { error: err };
+    }
   };
 
   const signOut = async () => {
