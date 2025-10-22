@@ -21,10 +21,30 @@ CREATE TABLE profiles (
   weight_kg INTEGER,
   body_type TEXT, -- slim, average, athletic, muscular, stocky, large
   ethnicity TEXT,
+  body_hair TEXT, -- none, light, moderate, heavy, natural
+
+  -- Identity & Pronouns
+  pronouns TEXT, -- he/him, she/her, they/them, custom
+
+  -- Sexual Health
+  hiv_status TEXT, -- negative, positive, unknown
+  hiv_last_tested DATE,
+  on_prep BOOLEAN DEFAULT FALSE,
+
+  -- Position & Preferences
+  position TEXT, -- top, bottom, versatile, side
+  smoking TEXT, -- no, occasionally, regularly
+  drinking TEXT, -- no, occasionally, regularly, socially
+  languages TEXT[], -- array of language codes
 
   -- Preferences
   looking_for TEXT[], -- chat, dates, friends, networking, relationship, right now
   relationship_status TEXT, -- single, partnered, open relationship, married
+
+  -- Meeting Preferences
+  can_host BOOLEAN DEFAULT FALSE,
+  can_travel BOOLEAN DEFAULT FALSE,
+  available_now BOOLEAN DEFAULT FALSE
 
   -- Location
   location GEOGRAPHY(POINT),
@@ -51,6 +71,11 @@ CREATE TABLE profiles (
 
   -- Constraints
   CONSTRAINT valid_body_type CHECK (body_type IN ('slim', 'average', 'athletic', 'muscular', 'stocky', 'large')),
+  CONSTRAINT valid_body_hair CHECK (body_hair IN ('none', 'light', 'moderate', 'heavy', 'natural')),
+  CONSTRAINT valid_hiv_status CHECK (hiv_status IN ('negative', 'positive', 'unknown')),
+  CONSTRAINT valid_position CHECK (position IN ('top', 'bottom', 'versatile', 'side')),
+  CONSTRAINT valid_smoking CHECK (smoking IN ('no', 'occasionally', 'regularly')),
+  CONSTRAINT valid_drinking CHECK (drinking IN ('no', 'occasionally', 'regularly', 'socially')),
   CONSTRAINT valid_relationship_status CHECK (relationship_status IN ('single', 'partnered', 'open_relationship', 'married')),
   CONSTRAINT valid_distance_unit CHECK (distance_unit IN ('km', 'mi')),
   CONSTRAINT valid_age CHECK (date_of_birth <= CURRENT_DATE - INTERVAL '18 years')
@@ -90,6 +115,48 @@ CREATE TABLE album_photos (
   photo_url TEXT NOT NULL,
   display_order INTEGER NOT NULL DEFAULT 0
 );
+
+-- Tribes (user tags/categories like Bear, Twink, Otter, etc.)
+CREATE TABLE tribes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+  name TEXT NOT NULL UNIQUE,
+  slug TEXT NOT NULL UNIQUE,
+  description TEXT,
+  icon TEXT, -- emoji or icon identifier
+  display_order INTEGER DEFAULT 0
+);
+
+-- Profile tribes (junction table)
+CREATE TABLE profile_tribes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+  profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  tribe_id UUID NOT NULL REFERENCES tribes(id) ON DELETE CASCADE,
+
+  UNIQUE(profile_id, tribe_id)
+);
+
+-- Insert default tribes
+INSERT INTO tribes (name, slug, description, icon, display_order) VALUES
+  ('Bear', 'bear', 'Larger, hairier men', '🐻', 1),
+  ('Otter', 'otter', 'Slender and hairy', '🦦', 2),
+  ('Twink', 'twink', 'Young, slim, smooth', '✨', 3),
+  ('Daddy', 'daddy', 'Mature, experienced', '👨', 4),
+  ('Jock', 'jock', 'Athletic and sporty', '💪', 5),
+  ('Geek', 'geek', 'Tech and gaming enthusiast', '🤓', 6),
+  ('Leather', 'leather', 'Leather community', '🧥', 7),
+  ('Poz', 'poz', 'HIV positive', '➕', 8),
+  ('Trans', 'trans', 'Transgender', '⚧️', 9),
+  ('Discreet', 'discreet', 'Private and low-key', '🤫', 10),
+  ('Clean-cut', 'clean_cut', 'Well-groomed', '✂️', 11),
+  ('Rugged', 'rugged', 'Masculine and rough', '🏔️', 12),
+  ('Muscle', 'muscle', 'Muscular build', '💪', 13),
+  ('Chub', 'chub', 'Larger build', '🧸', 14),
+  ('Pup', 'pup', 'Playful and energetic', '🐶', 15)
+ON CONFLICT (slug) DO NOTHING;
 
 -- Conversations
 CREATE TABLE conversations (
@@ -219,6 +286,10 @@ CREATE INDEX idx_taps_receiver ON taps(receiver_id, is_read) WHERE is_read = FAL
 CREATE INDEX idx_taps_sender ON taps(sender_id);
 
 CREATE INDEX idx_profile_views_viewed ON profile_views(viewed_profile_id, created_at DESC);
+
+CREATE INDEX idx_profile_tribes_profile ON profile_tribes(profile_id);
+CREATE INDEX idx_profile_tribes_tribe ON profile_tribes(tribe_id);
+CREATE INDEX idx_tribes_slug ON tribes(slug);
 
 -- Function to calculate distance between users
 CREATE OR REPLACE FUNCTION get_nearby_profiles(
@@ -359,6 +430,24 @@ CREATE POLICY "Users can manage own album photos"
       WHERE a.id = album_id AND a.profile_id = auth.uid()
     )
   );
+
+-- Tribes
+ALTER TABLE tribes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Tribes are viewable by everyone"
+  ON tribes FOR SELECT
+  USING (TRUE);
+
+-- Profile Tribes
+ALTER TABLE profile_tribes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Profile tribes viewable by everyone"
+  ON profile_tribes FOR SELECT
+  USING (TRUE);
+
+CREATE POLICY "Users can manage own profile tribes"
+  ON profile_tribes FOR ALL
+  USING (auth.uid() = profile_id);
 
 -- Conversations
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;

@@ -2,6 +2,16 @@
 
 export type BodyType = 'slim' | 'average' | 'athletic' | 'muscular' | 'stocky' | 'large';
 
+export type BodyHair = 'none' | 'light' | 'moderate' | 'heavy' | 'natural';
+
+export type HIVStatus = 'negative' | 'positive' | 'unknown';
+
+export type Position = 'top' | 'bottom' | 'versatile' | 'side';
+
+export type Smoking = 'no' | 'occasionally' | 'regularly';
+
+export type Drinking = 'no' | 'occasionally' | 'regularly' | 'socially';
+
 export type RelationshipStatus = 'single' | 'partnered' | 'open_relationship' | 'married';
 
 export type LookingFor = 'chat' | 'dates' | 'friends' | 'networking' | 'relationship' | 'right_now';
@@ -29,10 +39,30 @@ export interface Profile {
   weight_kg: number | null;
   body_type: BodyType | null;
   ethnicity: string | null;
+  body_hair: BodyHair | null;
+
+  // Identity & Pronouns
+  pronouns: string | null;
+
+  // Sexual Health
+  hiv_status: HIVStatus | null;
+  hiv_last_tested: string | null;
+  on_prep: boolean;
+
+  // Position & Preferences
+  position: Position | null;
+  smoking: Smoking | null;
+  drinking: Drinking | null;
+  languages: string[] | null;
 
   // Preferences
   looking_for: LookingFor[] | null;
   relationship_status: RelationshipStatus | null;
+
+  // Meeting Preferences
+  can_host: boolean;
+  can_travel: boolean;
+  available_now: boolean;
 
   // Location
   location: { lat: number; lng: number } | null;
@@ -147,12 +177,33 @@ export interface Report {
   is_resolved: boolean;
 }
 
+export interface Tribe {
+  id: string;
+  created_at: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  icon: string | null;
+  display_order: number;
+}
+
+export interface ProfileTribe {
+  id: string;
+  created_at: string;
+  profile_id: string;
+  tribe_id: string;
+}
+
 // Extended types with joined data
 export interface ProfileWithPhotos extends Profile {
   photos: ProfilePhoto[];
 }
 
-export interface ProfileWithDistance extends ProfileWithPhotos {
+export interface ProfileWithTribes extends ProfileWithPhotos {
+  tribes: Tribe[];
+}
+
+export interface ProfileWithDistance extends ProfileWithTribes {
   distance_km: number;
 }
 
@@ -228,6 +279,16 @@ export interface Database {
         Row: Report;
         Insert: Omit<Report, 'id' | 'created_at' | 'is_resolved'>;
         Update: Partial<Pick<Report, 'is_resolved'>>;
+      };
+      tribes: {
+        Row: Tribe;
+        Insert: Omit<Tribe, 'id' | 'created_at'>;
+        Update: Partial<Omit<Tribe, 'id' | 'created_at'>>;
+      };
+      profile_tribes: {
+        Row: ProfileTribe;
+        Insert: Omit<ProfileTribe, 'id' | 'created_at'>;
+        Update: never;
       };
     };
   };

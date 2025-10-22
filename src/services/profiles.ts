@@ -375,3 +375,94 @@ export const reportUser = async (
 
   return true;
 };
+
+// Get all tribes
+export const getAllTribes = async () => {
+  const { data, error } = await supabase
+    .from('tribes')
+    .select('*')
+    .order('display_order');
+
+  if (error) {
+    console.error('Error fetching tribes:', error);
+    return [];
+  }
+
+  return data;
+};
+
+// Get user's tribes
+export const getUserTribes = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('profile_tribes')
+    .select('tribe_id, tribes(*)')
+    .eq('profile_id', userId);
+
+  if (error) {
+    console.error('Error fetching user tribes:', error);
+    return [];
+  }
+
+  return data.map((pt: any) => pt.tribes);
+};
+
+// Add tribe to user profile
+export const addTribeToProfile = async (userId: string, tribeId: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('profile_tribes')
+    .insert({
+      profile_id: userId,
+      tribe_id: tribeId,
+    });
+
+  if (error) {
+    console.error('Error adding tribe:', error);
+    return false;
+  }
+
+  return true;
+};
+
+// Remove tribe from user profile
+export const removeTribeFromProfile = async (userId: string, tribeId: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('profile_tribes')
+    .delete()
+    .eq('profile_id', userId)
+    .eq('tribe_id', tribeId);
+
+  if (error) {
+    console.error('Error removing tribe:', error);
+    return false;
+  }
+
+  return true;
+};
+
+// Set user tribes (replace all)
+export const setUserTribes = async (userId: string, tribeIds: string[]): Promise<boolean> => {
+  // First, delete all existing tribes
+  await supabase
+    .from('profile_tribes')
+    .delete()
+    .eq('profile_id', userId);
+
+  // Then insert new ones
+  if (tribeIds.length > 0) {
+    const { error } = await supabase
+      .from('profile_tribes')
+      .insert(
+        tribeIds.map(tribeId => ({
+          profile_id: userId,
+          tribe_id: tribeId,
+        }))
+      );
+
+    if (error) {
+      console.error('Error setting tribes:', error);
+      return false;
+    }
+  }
+
+  return true;
+};

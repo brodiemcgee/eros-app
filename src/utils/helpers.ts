@@ -1,6 +1,15 @@
 // Helper utility functions
 
-import { LookingFor, BodyType, RelationshipStatus } from '../types/database';
+import {
+  LookingFor,
+  BodyType,
+  RelationshipStatus,
+  BodyHair,
+  HIVStatus,
+  Position,
+  Smoking,
+  Drinking
+} from '../types/database';
 
 // Calculate age from date of birth
 export const calculateAge = (dateOfBirth: string): number => {
@@ -133,4 +142,51 @@ export const getInitials = (name: string): string => {
 export const truncateText = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
+};
+
+// Format body hair
+export const formatBodyHair = (bodyHair: BodyHair | null): string => {
+  if (!bodyHair) return 'Not specified';
+  return bodyHair.charAt(0).toUpperCase() + bodyHair.slice(1);
+};
+
+// Format HIV status
+export const formatHIVStatus = (status: HIVStatus | null): string => {
+  if (!status) return 'Not specified';
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+// Format position
+export const formatPosition = (position: Position | null): string => {
+  if (!position) return 'Not specified';
+  return position.charAt(0).toUpperCase() + position.slice(1);
+};
+
+// Format smoking
+export const formatSmoking = (smoking: Smoking | null): string => {
+  if (!smoking) return 'Not specified';
+  if (smoking === 'no') return 'Non-smoker';
+  return `Smokes ${smoking}`;
+};
+
+// Format drinking
+export const formatDrinking = (drinking: Drinking | null): string => {
+  if (!drinking) return 'Not specified';
+  if (drinking === 'no') return 'Non-drinker';
+  return `Drinks ${drinking}`;
+};
+
+// Format languages
+export const formatLanguages = (languages: string[] | null): string => {
+  if (!languages || languages.length === 0) return 'Not specified';
+  return languages.join(', ');
+};
+
+// Format meeting preferences
+export const formatMeetingPreferences = (canHost: boolean, canTravel: boolean, availableNow: boolean): string[] => {
+  const prefs: string[] = [];
+  if (canHost) prefs.push('Can host');
+  if (canTravel) prefs.push('Can travel');
+  if (availableNow) prefs.push('Available now');
+  return prefs;
 };
