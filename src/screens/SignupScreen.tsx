@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
 import { RootStackParamList } from '../types/navigation';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../utils/theme';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES, SHADOWS } from '../utils/theme';
 import { isValidEmail, isValidPassword } from '../utils/helpers';
 
 type SignupScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
@@ -206,14 +206,16 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xxl,
   },
   logo: {
-    fontSize: FONT_SIZES.xxxl,
+    fontSize: 48, // Large display size
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.primary,
     textAlign: 'center',
     marginBottom: SPACING.sm,
+    fontFamily: FONT_FAMILIES.serif, // Serif for logo
+    letterSpacing: 2,
   },
   subtitle: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: FONT_SIZES.xl,
     color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: SPACING.xxl,
@@ -222,36 +224,38 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   input: {
-    backgroundColor: COLORS.backgroundSecondary,
-    borderWidth: 1,
+    backgroundColor: COLORS.background,
+    borderWidth: 1.5,
     borderColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg, // More rounded
+    padding: SPACING.lg,
     marginBottom: SPACING.md,
     fontSize: FONT_SIZES.md,
     color: COLORS.text,
   },
   button: {
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
+    backgroundColor: COLORS.secondary, // Teal for CTA
+    borderRadius: BORDER_RADIUS.pill, // Pill-shaped
+    padding: SPACING.lg,
+    paddingVertical: SPACING.lg,
     alignItems: 'center',
-    marginTop: SPACING.md,
+    marginTop: SPACING.lg,
+    ...SHADOWS.small,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.background,
   },
   linkButton: {
-    marginTop: SPACING.lg,
+    marginTop: SPACING.xl,
     alignItems: 'center',
   },
   linkText: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.md,
     color: COLORS.textSecondary,
   },
   linkTextBold: {
@@ -263,5 +267,6 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     textAlign: 'center',
     marginTop: SPACING.xl,
+    lineHeight: 18,
   },
 });

@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../contexts/AuthContext';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../utils/theme';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES, SHADOWS } from '../utils/theme';
 
 type SettingsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Settings'>;
 
@@ -222,39 +222,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: SPACING.md,
-    backgroundColor: COLORS.backgroundSecondary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    padding: SPACING.lg,
+    paddingTop: SPACING.xl,
+    backgroundColor: COLORS.background,
   },
   backButton: {
-    fontSize: FONT_SIZES.xl,
-    color: COLORS.primary,
-  },
-  headerTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.bold as any,
+    fontSize: FONT_SIZES.xxl,
     color: COLORS.text,
   },
+  headerTitle: {
+    fontSize: FONT_SIZES.xxxl,
+    fontWeight: FONT_WEIGHTS.bold as any,
+    color: COLORS.text,
+    fontFamily: FONT_FAMILIES.serif,
+  },
   section: {
-    marginTop: SPACING.lg,
+    marginTop: SPACING.md,
+    marginHorizontal: SPACING.md,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.xs,
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.textMuted,
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.xs,
-    letterSpacing: 1,
+    paddingHorizontal: SPACING.sm,
+    paddingBottom: SPACING.sm,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   settingItem: {
-    backgroundColor: COLORS.backgroundSecondary,
-    padding: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.cardBackground,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.md,
+    marginBottom: SPACING.xs,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.card,
   },
   settingText: {
     fontSize: FONT_SIZES.md,
@@ -262,14 +267,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingArrow: {
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xxl,
     color: COLORS.textMuted,
   },
   logoutText: {
     color: COLORS.primary,
+    fontWeight: FONT_WEIGHTS.semibold as any,
   },
   deleteText: {
     color: COLORS.error,
+    fontWeight: FONT_WEIGHTS.semibold as any,
   },
   versionText: {
     fontSize: FONT_SIZES.sm,
