@@ -116,17 +116,19 @@ export const OnboardingProfileScreen: React.FC = () => {
         console.warn('Location fetch failed, continuing without location:', locError);
       }
 
-      // Create profile
-      console.log('Inserting profile into database...');
+      // Create or update profile (upsert to handle existing profiles)
+      console.log('Upserting profile into database...');
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .upsert({
           id: user.id,
           display_name: displayName.trim(),
           bio: bio.trim() || null,
           date_of_birth: dateOfBirth,
           city,
           country,
+        }, {
+          onConflict: 'id'
         });
 
       if (profileError) {
@@ -134,7 +136,7 @@ export const OnboardingProfileScreen: React.FC = () => {
         throw profileError;
       }
 
-      console.log('Profile created successfully');
+      console.log('Profile created/updated successfully');
 
       // Upload photo if provided
       if (photoUri) {
