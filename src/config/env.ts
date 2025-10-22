@@ -1,8 +1,25 @@
 // Environment configuration
-// Make sure to create a .env file with your Supabase credentials
+// Values are injected at build time via window.__ENV__ in index.html
 
-// Import from generated file (created at build time by scripts/generate-env.js)
-export { ENV } from './env.generated';
+declare global {
+  interface Window {
+    __ENV__?: {
+      SUPABASE_URL: string;
+      SUPABASE_ANON_KEY: string;
+      GOOGLE_MAPS_API_KEY: string;
+    };
+  }
+}
+
+// For web builds, use injected values; for native, use process.env
+const isWeb = typeof window !== 'undefined';
+const injectedEnv = isWeb && window.__ENV__ ? window.__ENV__ : null;
+
+export const ENV = {
+  SUPABASE_URL: injectedEnv?.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL || '',
+  SUPABASE_ANON_KEY: injectedEnv?.SUPABASE_ANON_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
+  GOOGLE_MAPS_API_KEY: injectedEnv?.GOOGLE_MAPS_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+};
 
 // Validate required environment variables
 const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'] as const;
