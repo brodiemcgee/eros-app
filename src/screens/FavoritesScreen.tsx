@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../contexts/AuthContext';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../utils/theme';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES, SHADOWS } from '../utils/theme';
 import { ProfileWithPhotos } from '../types/database';
 import { getFavorites } from '../services/profiles';
 import { calculateAge } from '../utils/helpers';
@@ -115,25 +115,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    padding: SPACING.md,
-    backgroundColor: COLORS.backgroundSecondary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    padding: SPACING.lg,
+    paddingTop: SPACING.xl,
+    backgroundColor: COLORS.background,
   },
   headerTitle: {
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xxxl, // 28px like Explore
     fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.primary,
+    color: COLORS.text,
+    fontFamily: FONT_FAMILIES.serif, // Serif for headers
   },
   gridContainer: {
-    padding: SPACING.sm,
+    padding: SPACING.md,
   },
   favoriteCard: {
     flex: 1,
     margin: SPACING.sm,
-    backgroundColor: COLORS.backgroundSecondary,
-    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: BORDER_RADIUS.md,
     overflow: 'hidden',
+    ...SHADOWS.card,
   },
   favoriteImage: {
     width: '100%',
@@ -169,14 +170,15 @@ const styles = StyleSheet.create({
     marginTop: 100,
   },
   emptyText: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: FONT_SIZES.xxl,
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.textSecondary,
     marginBottom: SPACING.sm,
   },
   emptySubtext: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.md,
     color: COLORS.textMuted,
     textAlign: 'center',
+    lineHeight: 24,
   },
 });

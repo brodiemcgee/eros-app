@@ -12,7 +12,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../contexts/AuthContext';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../utils/theme';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES, SHADOWS } from '../utils/theme';
 import { ConversationWithProfile } from '../types/database';
 import { getUserConversations } from '../services/messaging';
 import { formatRelativeTime } from '../utils/helpers';
@@ -132,27 +132,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    padding: SPACING.md,
-    backgroundColor: COLORS.backgroundSecondary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    padding: SPACING.lg,
+    paddingTop: SPACING.xl,
+    backgroundColor: COLORS.background,
   },
   headerTitle: {
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xxxl, // 28px like Explore
     fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.primary,
+    color: COLORS.text,
+    fontFamily: FONT_FAMILIES.serif, // Serif for headers
   },
   conversationCard: {
     flexDirection: 'row',
     padding: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    marginHorizontal: SPACING.md,
+    marginVertical: SPACING.xs,
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: BORDER_RADIUS.md,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.card,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     marginRight: SPACING.md,
   },
   placeholderAvatar: {
@@ -175,7 +180,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   conversationName: {
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.text,
     flex: 1,
@@ -198,14 +203,15 @@ const styles = StyleSheet.create({
     padding: SPACING.xl,
   },
   emptyText: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: FONT_SIZES.xxl,
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.textSecondary,
     marginBottom: SPACING.sm,
   },
   emptySubtext: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.md,
     color: COLORS.textMuted,
     textAlign: 'center',
+    lineHeight: 24,
   },
 });

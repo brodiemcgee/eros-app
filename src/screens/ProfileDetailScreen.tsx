@@ -13,7 +13,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../contexts/AuthContext';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../utils/theme';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES, SHADOWS } from '../utils/theme';
 import {
   getProfileById,
   addFavorite,
@@ -186,47 +186,64 @@ export const ProfileDetailScreen: React.FC = () => {
           </View>
 
           <Text style={styles.age}>{age} years old</Text>
+          {profile.pronouns && (
+            <Text style={styles.pronouns}>{profile.display_name} uses {profile.pronouns} pronouns</Text>
+          )}
           {profile.last_active_at && !profile.is_online && (
             <Text style={styles.lastActive}>
               Active {formatRelativeTime(profile.last_active_at)}
             </Text>
           )}
 
-          {profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
-
-          <View style={styles.statsContainer}>
-            {profile.height_cm && (
-              <View style={styles.stat}>
-                <Text style={styles.statLabel}>Height</Text>
-                <Text style={styles.statValue}>{formatHeight(profile.height_cm)}</Text>
-              </View>
-            )}
-            {profile.weight_kg && (
-              <View style={styles.stat}>
-                <Text style={styles.statLabel}>Weight</Text>
-                <Text style={styles.statValue}>{formatWeight(profile.weight_kg)}</Text>
-              </View>
-            )}
-            {profile.body_type && (
-              <View style={styles.stat}>
-                <Text style={styles.statLabel}>Body Type</Text>
-                <Text style={styles.statValue}>
-                  {profile.body_type.charAt(0).toUpperCase() + profile.body_type.slice(1)}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {profile.looking_for && profile.looking_for.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Looking For</Text>
-              <Text style={styles.sectionContent}>{formatLookingFor(profile.looking_for)}</Text>
+          {/* Bio Card - Hinge style */}
+          {profile.bio && (
+            <View style={styles.card}>
+              <Text style={styles.cardPrompt}>About me</Text>
+              <Text style={styles.cardAnswer}>{profile.bio}</Text>
             </View>
           )}
 
+          {/* Looking For Card */}
+          {profile.looking_for && profile.looking_for.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.cardPrompt}>I'm looking for</Text>
+              <Text style={styles.cardAnswer}>{formatLookingFor(profile.looking_for)}</Text>
+            </View>
+          )}
+
+          {/* Stats Card */}
+          {(profile.height_cm || profile.weight_kg || profile.body_type) && (
+            <View style={styles.card}>
+              <Text style={styles.cardPrompt}>The basics</Text>
+              <View style={styles.statsGrid}>
+                {profile.height_cm && (
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>Height</Text>
+                    <Text style={styles.statValue}>{formatHeight(profile.height_cm)}</Text>
+                  </View>
+                )}
+                {profile.weight_kg && (
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>Weight</Text>
+                    <Text style={styles.statValue}>{formatWeight(profile.weight_kg)}</Text>
+                  </View>
+                )}
+                {profile.body_type && (
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>Body Type</Text>
+                    <Text style={styles.statValue}>
+                      {profile.body_type.charAt(0).toUpperCase() + profile.body_type.slice(1)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Tribes Card */}
           {tribes.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Tribes</Text>
+            <View style={styles.card}>
+              <Text style={styles.cardPrompt}>My tribes</Text>
               <View style={styles.tribesContainer}>
                 {tribes.map((tribe: any) => (
                   <View key={tribe.id} style={styles.tribeTag}>
@@ -239,38 +256,38 @@ export const ProfileDetailScreen: React.FC = () => {
             </View>
           )}
 
-          <View style={styles.statsContainer}>
-            {profile.position && (
-              <View style={styles.stat}>
-                <Text style={styles.statLabel}>Position</Text>
-                <Text style={styles.statValue}>{formatPosition(profile.position)}</Text>
+          {/* More Details Card */}
+          {(profile.position || profile.body_hair || profile.ethnicity) && (
+            <View style={styles.card}>
+              <Text style={styles.cardPrompt}>More about me</Text>
+              <View style={styles.statsGrid}>
+                {profile.position && (
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>Position</Text>
+                    <Text style={styles.statValue}>{formatPosition(profile.position)}</Text>
+                  </View>
+                )}
+                {profile.body_hair && (
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>Body Hair</Text>
+                    <Text style={styles.statValue}>{formatBodyHair(profile.body_hair)}</Text>
+                  </View>
+                )}
+                {profile.ethnicity && (
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>Ethnicity</Text>
+                    <Text style={styles.statValue}>{profile.ethnicity}</Text>
+                  </View>
+                )}
               </View>
-            )}
-            {profile.body_hair && (
-              <View style={styles.stat}>
-                <Text style={styles.statLabel}>Body Hair</Text>
-                <Text style={styles.statValue}>{formatBodyHair(profile.body_hair)}</Text>
-              </View>
-            )}
-            {profile.ethnicity && (
-              <View style={styles.stat}>
-                <Text style={styles.statLabel}>Ethnicity</Text>
-                <Text style={styles.statValue}>{profile.ethnicity}</Text>
-              </View>
-            )}
-          </View>
-
-          {profile.pronouns && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Pronouns</Text>
-              <Text style={styles.sectionContent}>{profile.pronouns}</Text>
             </View>
           )}
 
+          {/* Sexual Health Card */}
           {profile.hiv_status && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Sexual Health</Text>
-              <Text style={styles.sectionContent}>
+            <View style={styles.card}>
+              <Text style={styles.cardPrompt}>Sexual health</Text>
+              <Text style={styles.cardAnswer}>
                 HIV Status: {formatHIVStatus(profile.hiv_status)}
                 {profile.hiv_last_tested && ` • Last tested: ${new Date(profile.hiv_last_tested).toLocaleDateString()}`}
                 {profile.on_prep && ' • On PrEP'}
@@ -278,32 +295,40 @@ export const ProfileDetailScreen: React.FC = () => {
             </View>
           )}
 
-          <View style={styles.statsContainer}>
-            {profile.smoking && (
-              <View style={styles.stat}>
-                <Text style={styles.statLabel}>Smoking</Text>
-                <Text style={styles.statValue}>{formatSmoking(profile.smoking)}</Text>
+          {/* Lifestyle Card */}
+          {(profile.smoking || profile.drinking) && (
+            <View style={styles.card}>
+              <Text style={styles.cardPrompt}>Lifestyle</Text>
+              <View style={styles.statsGrid}>
+                {profile.smoking && (
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>Smoking</Text>
+                    <Text style={styles.statValue}>{formatSmoking(profile.smoking)}</Text>
+                  </View>
+                )}
+                {profile.drinking && (
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>Drinking</Text>
+                    <Text style={styles.statValue}>{formatDrinking(profile.drinking)}</Text>
+                  </View>
+                )}
               </View>
-            )}
-            {profile.drinking && (
-              <View style={styles.stat}>
-                <Text style={styles.statLabel}>Drinking</Text>
-                <Text style={styles.statValue}>{formatDrinking(profile.drinking)}</Text>
-              </View>
-            )}
-          </View>
-
-          {profile.languages && profile.languages.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Languages</Text>
-              <Text style={styles.sectionContent}>{formatLanguages(profile.languages)}</Text>
             </View>
           )}
 
+          {/* Languages Card */}
+          {profile.languages && profile.languages.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.cardPrompt}>Languages</Text>
+              <Text style={styles.cardAnswer}>{formatLanguages(profile.languages)}</Text>
+            </View>
+          )}
+
+          {/* Meeting Preferences Card */}
           {(profile.can_host || profile.can_travel || profile.available_now) && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Meeting</Text>
-              <Text style={styles.sectionContent}>
+            <View style={styles.card}>
+              <Text style={styles.cardPrompt}>Meeting preferences</Text>
+              <Text style={styles.cardAnswer}>
                 {formatMeetingPreferences(profile.can_host, profile.can_travel, profile.available_now).join(' • ')}
               </Text>
             </View>
@@ -331,7 +356,7 @@ export const ProfileDetailScreen: React.FC = () => {
           </View>
 
           <TouchableOpacity style={styles.messageButton} onPress={handleMessage}>
-            <Text style={styles.messageButtonText}>Send Message</Text>
+            <Text style={styles.messageButtonText}>💬 Send Message</Text>
           </TouchableOpacity>
 
           <View style={styles.actions}>
@@ -370,27 +395,30 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 40,
+    top: 50,
     right: 20,
     zIndex: 10,
-    backgroundColor: COLORS.overlay,
+    backgroundColor: COLORS.background,
     borderRadius: BORDER_RADIUS.round,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    ...SHADOWS.small,
   },
   closeButtonText: {
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xxl,
     color: COLORS.text,
+    fontWeight: FONT_WEIGHTS.bold as any,
   },
   profilePhoto: {
     width: '100%',
-    aspectRatio: 1,
+    aspectRatio: 0.9, // Slightly taller
     backgroundColor: COLORS.backgroundTertiary,
   },
   profileInfo: {
     padding: SPACING.lg,
+    paddingTop: SPACING.md,
   },
   nameRow: {
     flexDirection: 'row',
@@ -404,7 +432,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    fontSize: FONT_SIZES.xxl,
+    fontSize: FONT_SIZES.xxxl, // 28px like Hinge
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.text,
   },
@@ -416,64 +444,79 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
   },
   favoriteIcon: {
-    fontSize: FONT_SIZES.xxl,
+    fontSize: FONT_SIZES.xxxl,
   },
   age: {
     fontSize: FONT_SIZES.md,
     color: COLORS.textSecondary,
     marginBottom: SPACING.xs,
   },
+  pronouns: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.xs,
+  },
   lastActive: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textMuted,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   },
-  bio: {
-    fontSize: FONT_SIZES.md,
+  // Hinge-style cards
+  card: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: BORDER_RADIUS.lg, // 16px
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.card,
+  },
+  cardPrompt: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.sm,
+    fontWeight: FONT_WEIGHTS.medium as any,
+  },
+  cardAnswer: {
+    fontSize: FONT_SIZES.lg, // 18px
     color: COLORS.text,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.lg,
+    lineHeight: 26,
+    fontFamily: FONT_FAMILIES.serif, // Serif font for answers like Hinge
   },
-  statsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: SPACING.lg,
+  // Stats grid within cards
+  statsGrid: {
+    gap: SPACING.md,
   },
-  stat: {
-    width: '33%',
-    marginBottom: SPACING.md,
+  statItem: {
+    marginBottom: SPACING.sm,
   },
   statLabel: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textMuted,
     marginBottom: SPACING.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   statValue: {
     fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.medium as any,
-    color: COLORS.text,
-  },
-  section: {
-    marginBottom: SPACING.lg,
-  },
-  sectionTitle: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-  },
-  sectionContent: {
-    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.semibold as any,
     color: COLORS.text,
   },
   tapsContainer: {
-    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.card,
   },
   tapsTitle: {
     fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.bold as any,
+    fontWeight: FONT_WEIGHTS.medium as any,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
+    textAlign: 'center',
   },
   tapsRow: {
     flexDirection: 'row',
@@ -481,38 +524,46 @@ const styles = StyleSheet.create({
   },
   tapButton: {
     padding: SPACING.sm,
+    alignItems: 'center',
   },
   tapIcon: {
-    fontSize: 32,
+    fontSize: 36,
   },
   messageButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.secondary, // Teal for primary CTA
+    borderRadius: BORDER_RADIUS.pill,
     padding: SPACING.md,
+    paddingVertical: SPACING.lg,
     alignItems: 'center',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
+    marginTop: SPACING.md,
+    ...SHADOWS.small,
   },
   messageButtonText: {
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.background,
+    color: COLORS.background, // White text
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: SPACING.md,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xl,
   },
   actionButton: {
     flex: 1,
     marginHorizontal: SPACING.xs,
-    padding: SPACING.sm,
-    backgroundColor: COLORS.backgroundTertiary,
-    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    backgroundColor: COLORS.background,
+    borderRadius: BORDER_RADIUS.pill,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   actionButtonText: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
+    fontWeight: FONT_WEIGHTS.medium as any,
   },
   errorText: {
     fontSize: FONT_SIZES.md,
@@ -521,18 +572,19 @@ const styles = StyleSheet.create({
   tribesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: SPACING.xs,
+    gap: SPACING.xs,
   },
   tribeTag: {
     backgroundColor: COLORS.backgroundTertiary,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.md,
-    marginRight: SPACING.xs,
-    marginBottom: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   tribeText: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.text,
+    fontWeight: FONT_WEIGHTS.medium as any,
   },
 });

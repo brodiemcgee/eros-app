@@ -11,7 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../contexts/AuthContext';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../utils/theme';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES, SHADOWS } from '../utils/theme';
 import { calculateAge, formatHeight, formatWeight, formatLookingFor } from '../utils/helpers';
 
 type ProfileScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -107,32 +107,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: SPACING.md,
-    backgroundColor: COLORS.backgroundSecondary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    padding: SPACING.lg,
+    paddingTop: SPACING.xl,
+    backgroundColor: COLORS.background,
   },
   headerTitle: {
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xxxl, // 28px like other screens
     fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.primary,
+    color: COLORS.text,
+    fontFamily: FONT_FAMILIES.serif, // Serif for headers
   },
   settingsButton: {
     padding: SPACING.sm,
   },
   settingsButtonText: {
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xxl,
   },
   profilePhoto: {
     width: '100%',
-    aspectRatio: 1,
+    aspectRatio: 0.9,
     backgroundColor: COLORS.backgroundTertiary,
   },
   profileInfo: {
     padding: SPACING.lg,
   },
   name: {
-    fontSize: FONT_SIZES.xxl,
+    fontSize: FONT_SIZES.xxxl, // 28px
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.text,
     marginBottom: SPACING.xs,
@@ -143,64 +143,84 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   bio: {
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.lg, // 18px
     color: COLORS.text,
     marginBottom: SPACING.lg,
+    lineHeight: 26,
+    fontFamily: FONT_FAMILIES.serif, // Serif for bio text
   },
   statsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.card,
   },
   stat: {
-    width: '33%',
     marginBottom: SPACING.md,
   },
   statLabel: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textMuted,
     marginBottom: SPACING.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   statValue: {
     fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.medium as any,
+    fontWeight: FONT_WEIGHTS.semibold as any,
     color: COLORS.text,
   },
   section: {
-    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.card,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.bold as any,
+    fontWeight: FONT_WEIGHTS.medium as any,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   sectionContent: {
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.lg,
     color: COLORS.text,
+    lineHeight: 26,
+    fontFamily: FONT_FAMILIES.serif,
   },
   editButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.secondary, // Teal for primary CTA
+    borderRadius: BORDER_RADIUS.pill,
     padding: SPACING.md,
+    paddingVertical: SPACING.lg,
     alignItems: 'center',
     marginBottom: SPACING.md,
+    ...SHADOWS.small,
   },
   editButtonText: {
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.background,
   },
   signOutButton: {
-    backgroundColor: COLORS.error,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.background,
+    borderRadius: BORDER_RADIUS.pill,
     padding: SPACING.md,
+    paddingVertical: SPACING.lg,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.error,
   },
   signOutButtonText: {
     fontSize: FONT_SIZES.md,
     fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.text,
+    color: COLORS.error,
   },
   errorText: {
     fontSize: FONT_SIZES.md,
