@@ -17,7 +17,7 @@ CREATE TABLE admin_users (
   email TEXT UNIQUE NOT NULL,
   role admin_role NOT NULL DEFAULT 'moderator',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_by UUID REFERENCES admin_users(id), -- which admin created this admin
+  created_by UUID, -- which admin created this admin (FK added below)
   last_login_at TIMESTAMP WITH TIME ZONE,
   is_active BOOLEAN DEFAULT TRUE,
   two_factor_enabled BOOLEAN DEFAULT FALSE,
@@ -25,6 +25,11 @@ CREATE TABLE admin_users (
   ip_allowlist TEXT[], -- optional IP restrictions for super admins
   metadata JSONB DEFAULT '{}'::JSONB -- additional data (phone, notes, etc)
 );
+
+-- Add self-referencing foreign key constraint after table creation
+ALTER TABLE admin_users
+  ADD CONSTRAINT admin_users_created_by_fkey
+  FOREIGN KEY (created_by) REFERENCES admin_users(id);
 
 -- Create index for faster lookups
 CREATE INDEX idx_admin_users_email ON admin_users(email);
