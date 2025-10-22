@@ -40,6 +40,7 @@ import {
   formatLanguages,
   formatMeetingPreferences,
 } from '../utils/helpers';
+import { PhotoGallery } from '../components/PhotoGallery';
 
 type ProfileDetailRouteProp = RouteProp<RootStackParamList, 'ProfileDetail'>;
 type ProfileDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProfileDetail'>;
@@ -53,6 +54,8 @@ export const ProfileDetailScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
   const [tribes, setTribes] = useState<any[]>([]);
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
   useEffect(() => {
     loadProfile();
@@ -163,7 +166,12 @@ export const ProfileDetailScreen: React.FC = () => {
 
       <ScrollView>
         {primaryPhoto && (
-          <Image source={{ uri: primaryPhoto.photo_url }} style={styles.profilePhoto} />
+          <TouchableOpacity onPress={() => {
+            setSelectedPhotoIndex(0);
+            setShowPhotoGallery(true);
+          }}>
+            <Image source={{ uri: primaryPhoto.photo_url }} style={styles.profilePhoto} />
+          </TouchableOpacity>
         )}
 
         <View style={styles.profileInfo}>
@@ -336,6 +344,15 @@ export const ProfileDetailScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+
+      {profile && profile.photos && profile.photos.length > 0 && (
+        <PhotoGallery
+          photos={profile.photos}
+          initialIndex={selectedPhotoIndex}
+          visible={showPhotoGallery}
+          onClose={() => setShowPhotoGallery(false)}
+        />
+      )}
     </View>
   );
 };
