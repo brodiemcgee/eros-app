@@ -17,13 +17,13 @@ CREATE TABLE admin_users (
   email TEXT UNIQUE NOT NULL,
   role admin_role NOT NULL DEFAULT 'moderator',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_by UUID, -- which admin created this admin, FK added below
+  created_by UUID,
   last_login_at TIMESTAMP WITH TIME ZONE,
   is_active BOOLEAN DEFAULT TRUE,
   two_factor_enabled BOOLEAN DEFAULT FALSE,
-  two_factor_secret TEXT, -- TOTP secret for 2FA
-  ip_allowlist TEXT[], -- optional IP restrictions for super admins
-  metadata JSONB DEFAULT '{}'::JSONB -- additional profile metadata
+  two_factor_secret TEXT,
+  ip_allowlist TEXT[],
+  metadata JSONB DEFAULT '{}'::JSONB
 );
 
 -- Add self-referencing foreign key constraint after table creation
@@ -104,13 +104,13 @@ CREATE TABLE moderation_actions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   admin_id UUID NOT NULL REFERENCES admin_users(id),
   action_type moderation_action_type NOT NULL,
-  target_user_id UUID REFERENCES profiles(id) ON DELETE SET NULL, -- user being moderated
-  target_content_id UUID, -- generic ID for photos or messages
-  reason TEXT, -- reason provided by admin
-  notes TEXT, -- additional admin information
-  metadata JSONB DEFAULT '{}'::JSONB, -- flexible additional data
+  target_user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  target_content_id UUID,
+  reason TEXT,
+  notes TEXT,
+  metadata JSONB DEFAULT '{}'::JSONB,
   ip_address INET,
-  result TEXT DEFAULT 'success' -- success, failed, partial
+  result TEXT DEFAULT 'success'
 );
 
 CREATE INDEX idx_moderation_actions_admin ON moderation_actions(admin_id);
@@ -126,7 +126,7 @@ CREATE TABLE admin_notes (
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   admin_id UUID NOT NULL REFERENCES admin_users(id),
   note TEXT NOT NULL,
-  is_flagged BOOLEAN DEFAULT FALSE, -- highlight important notes
+  is_flagged BOOLEAN DEFAULT FALSE,
   metadata JSONB DEFAULT '{}'::JSONB
 );
 
@@ -163,8 +163,8 @@ CREATE TABLE photo_moderation_queue (
   reviewed_by UUID REFERENCES admin_users(id),
   reviewed_at TIMESTAMP WITH TIME ZONE,
   rejection_reason TEXT,
-  ai_moderation_score NUMERIC(3,2), -- 0.00 to 1.00 from AWS Rekognition
-  ai_flags TEXT[], -- array of detected issues like nudity or violence
+  ai_moderation_score NUMERIC(3,2),
+  ai_flags TEXT[],
   notes TEXT
 );
 
@@ -183,10 +183,10 @@ CREATE TABLE subscription_plans (
   description TEXT,
   price_monthly NUMERIC(10,2) NOT NULL,
   price_annual NUMERIC(10,2),
-  stripe_price_id_monthly TEXT UNIQUE, -- Stripe Price ID
+  stripe_price_id_monthly TEXT UNIQUE,
   stripe_price_id_annual TEXT UNIQUE,
-  stripe_product_id TEXT UNIQUE, -- Stripe Product ID
-  features JSONB NOT NULL DEFAULT '{}'::JSONB, -- JSON array of feature flags
+  stripe_product_id TEXT UNIQUE,
+  features JSONB NOT NULL DEFAULT '{}'::JSONB,
   is_active BOOLEAN DEFAULT TRUE,
   display_order INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -205,8 +205,8 @@ CREATE TABLE user_subscriptions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   plan_id UUID NOT NULL REFERENCES subscription_plans(id),
-  stripe_subscription_id TEXT UNIQUE, -- Stripe Subscription ID
-  stripe_customer_id TEXT, -- Stripe Customer ID
+  stripe_subscription_id TEXT UNIQUE,
+  stripe_customer_id TEXT,
   status subscription_status NOT NULL DEFAULT 'active',
   current_period_start TIMESTAMP WITH TIME ZONE,
   current_period_end TIMESTAMP WITH TIME ZONE,
@@ -250,8 +250,8 @@ CREATE TYPE credit_reason AS ENUM ('admin_grant', 'refund', 'promotion', 'compen
 CREATE TABLE credits_ledger (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  admin_id UUID REFERENCES admin_users(id), -- null if automated
-  amount NUMERIC(10,2) NOT NULL, -- can be negative for deductions
+  admin_id UUID REFERENCES admin_users(id),
+  amount NUMERIC(10,2) NOT NULL,
   balance_after NUMERIC(10,2) NOT NULL,
   reason credit_reason NOT NULL,
   description TEXT,
@@ -276,13 +276,13 @@ CREATE TABLE age_verification_requests (
   method verification_method NOT NULL DEFAULT 'document_upload',
   status verification_status NOT NULL DEFAULT 'pending',
   submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  document_url TEXT, -- Secure S3/Supabase storage URL
-  document_type TEXT, -- 'drivers_license', 'passport', 'national_id'
+  document_url TEXT,
+  document_type TEXT,
   reviewed_by UUID REFERENCES admin_users(id),
   reviewed_at TIMESTAMP WITH TIME ZONE,
   rejection_reason TEXT,
   notes TEXT,
-  metadata JSONB DEFAULT '{}'::JSONB -- verification metadata
+  metadata JSONB DEFAULT '{}'::JSONB
 );
 
 CREATE INDEX idx_age_verification_user ON age_verification_requests(user_id);
@@ -297,8 +297,8 @@ CREATE TABLE data_export_requests (
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   status export_status NOT NULL DEFAULT 'pending',
-  download_url TEXT, -- Signed URL to download zip file
-  download_expires_at TIMESTAMP WITH TIME ZONE, -- URL expires after 7 days
+  download_url TEXT,
+  download_expires_at TIMESTAMP WITH TIME ZONE,
   completed_at TIMESTAMP WITH TIME ZONE,
   file_size_bytes BIGINT,
   metadata JSONB DEFAULT '{}'::JSONB
@@ -314,12 +314,12 @@ CREATE TABLE account_deletions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  scheduled_for TIMESTAMP WITH TIME ZONE, -- Soft delete after 30 days, hard delete after 90
+  scheduled_for TIMESTAMP WITH TIME ZONE,
   status deletion_status NOT NULL DEFAULT 'pending',
   reason TEXT,
   completed_at TIMESTAMP WITH TIME ZONE,
   canceled_at TIMESTAMP WITH TIME ZONE,
-  deleted_by UUID REFERENCES admin_users(id), -- if admin forced deletion
+  deleted_by UUID REFERENCES admin_users(id),
   metadata JSONB DEFAULT '{}'::JSONB
 );
 
@@ -331,7 +331,7 @@ CREATE INDEX idx_account_deletions_scheduled ON account_deletions(scheduled_for)
 CREATE TABLE terms_acceptances (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  terms_version TEXT NOT NULL, -- e.g., 'v1.0', 'v2.0'
+  terms_version TEXT NOT NULL,
   privacy_version TEXT NOT NULL,
   accepted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   ip_address INET,
@@ -349,17 +349,17 @@ CREATE TYPE flag_status AS ENUM ('pending', 'reviewed', 'dismissed', 'actioned')
 
 CREATE TABLE content_moderation_flags (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  content_id UUID NOT NULL, -- generic ID like photo_id or message_id
+  content_id UUID NOT NULL,
   content_type content_type NOT NULL,
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   flag_type flag_type NOT NULL,
-  ai_confidence NUMERIC(3,2), -- 0.00 to 1.00
-  ai_metadata JSONB DEFAULT '{}'::JSONB, -- raw AI response
+  ai_confidence NUMERIC(3,2),
+  ai_metadata JSONB DEFAULT '{}'::JSONB,
   flagged_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   status flag_status NOT NULL DEFAULT 'pending',
   reviewed_by UUID REFERENCES admin_users(id),
   reviewed_at TIMESTAMP WITH TIME ZONE,
-  action_taken TEXT, -- deleted, warned, or dismissed
+  action_taken TEXT,
   notes TEXT
 );
 
