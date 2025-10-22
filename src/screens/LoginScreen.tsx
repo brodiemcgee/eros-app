@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,11 +21,25 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, '
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { signIn } = useAuth();
+  const { signIn, profile, user, loading: authLoading } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Navigate after successful login when auth state updates
+  useEffect(() => {
+    if (user && !authLoading) {
+      console.log('Auth state updated, user:', user.id, 'profile:', profile ? 'exists' : 'null');
+      if (profile) {
+        console.log('Navigating to MainTabs');
+        navigation.replace('MainTabs');
+      } else {
+        console.log('Navigating to OnboardingProfile');
+        navigation.replace('OnboardingProfile');
+      }
+    }
+  }, [user, profile, authLoading]);
 
   const handleLogin = async () => {
     console.log('Login attempt:', { email });
@@ -69,7 +83,8 @@ export const LoginScreen: React.FC = () => {
         Alert.alert('Error', msg);
       }
     } else {
-      console.log('Login successful');
+      console.log('Login successful, waiting for auth state to update...');
+      // Navigation will happen automatically via useEffect when auth state updates
     }
   };
 
