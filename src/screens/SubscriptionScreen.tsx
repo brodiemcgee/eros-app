@@ -7,9 +7,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import {
   getSubscriptionPlans,
@@ -76,15 +76,40 @@ const PlanCard: React.FC<{
   );
 };
 
+// Web-only component - Premium purchases only available on mobile
+const WebOnlyMessage: React.FC = () => {
+  return (
+    <View style={styles.centerContainer}>
+      <View style={styles.webMessageContainer}>
+        <Text style={styles.webMessageIcon}>📱</Text>
+        <Text style={styles.webMessageTitle}>Premium Available on Mobile</Text>
+        <Text style={styles.webMessageText}>
+          Premium subscriptions are only available through our mobile app.
+        </Text>
+        <Text style={[styles.webMessageText, { marginTop: SPACING.md }]}>
+          Download the EROS app from the App Store or Google Play to upgrade to Premium.
+        </Text>
+      </View>
+    </View>
+  );
+};
+
 const SubscriptionScreenContent: React.FC = () => {
   const navigation = useNavigation();
   const { user } = useAuth();
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+
+  // On web, Stripe React Native is not available
+  const stripe = Platform.OS !== 'web' ? require('@stripe/stripe-react-native').useStripe() : null;
 
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [currentSubscription, setCurrentSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
+
+  // Show web-only message if on web platform
+  if (Platform.OS === 'web') {
+    return <WebOnlyMessage />;
+  }
 
   useEffect(() => {
     loadData();
@@ -108,7 +133,7 @@ const SubscriptionScreenContent: React.FC = () => {
   };
 
   const handlePurchase = async (plan: SubscriptionPlan) => {
-    if (!user) {
+    if (!user || !stripe) {
       Alert.alert('Error', 'Please log in to purchase a subscription');
       return;
     }
@@ -123,7 +148,7 @@ const SubscriptionScreenContent: React.FC = () => {
       );
 
       // Initialize payment sheet
-      const { error: initError } = await initPaymentSheet({
+      const { error: initError } = await stripe.initPaymentSheet({
         paymentIntentClientSecret: clientSecret,
         merchantDisplayName: 'EROS',
         customerId,
@@ -140,7 +165,7 @@ const SubscriptionScreenContent: React.FC = () => {
       }
 
       // Present payment sheet
-      const { error: presentError } = await presentPaymentSheet();
+      const { error: presentError } = await stripe.presentPaymentSheet();
 
       if (presentError) {
         if (presentError.code !== 'Canceled') {
@@ -249,7 +274,14 @@ const SubscriptionScreenContent: React.FC = () => {
 };
 
 export const SubscriptionScreen: React.FC = () => {
+  // On web, show message directly without Stripe provider
+  if (Platform.OS === 'web') {
+    return <SubscriptionScreenContent />;
+  }
+
+  // On native platforms, wrap with Stripe provider
   const publishableKey = getStripePublishableKey();
+  const { StripeProvider } = require('@stripe/stripe-react-native');
 
   return (
     <StripeProvider publishableKey={publishableKey}>
@@ -421,5 +453,30 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
     lineHeight: 18,
+  },
+  webMessageContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.xl,
+    margin: SPACING.lg,
+    alignItems: 'center',
+    ...SHADOWS.lg,
+  },
+  webMessageIcon: {
+    fontSize: 64,
+    marginBottom: SPACING.md,
+  },
+  webMessageTitle: {
+    fontSize: FONT_SIZES.xl,
+    fontWeight: FONT_WEIGHTS.bold as any,
+    color: COLORS.text,
+    marginBottom: SPACING.md,
+    textAlign: 'center',
+  },
+  webMessageText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

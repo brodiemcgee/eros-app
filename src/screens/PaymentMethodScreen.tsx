@@ -7,24 +7,50 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { StripeProvider, useStripe, CardField } from '@stripe/stripe-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { getStripePublishableKey } from '../services/stripe';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../utils/theme';
 import { supabase } from '../services/supabase';
 
+// Web-only component
+const WebOnlyMessage: React.FC = () => {
+  return (
+    <View style={styles.centerContainer}>
+      <View style={styles.webMessageContainer}>
+        <Text style={styles.webMessageIcon}>📱</Text>
+        <Text style={styles.webMessageTitle}>Payment Methods on Mobile</Text>
+        <Text style={styles.webMessageText}>
+          Payment method management is only available through our mobile app.
+        </Text>
+        <Text style={[styles.webMessageText, { marginTop: SPACING.md }]}>
+          Download the EROS app to manage your payment methods.
+        </Text>
+      </View>
+    </View>
+  );
+};
+
 const PaymentMethodScreenContent: React.FC = () => {
   const navigation = useNavigation();
   const { user } = useAuth();
-  const { confirmSetupIntent } = useStripe();
+
+  // On web, Stripe React Native is not available
+  const stripe = Platform.OS !== 'web' ? require('@stripe/stripe-react-native').useStripe() : null;
+  const CardField = Platform.OS !== 'web' ? require('@stripe/stripe-react-native').CardField : null;
+
+  // Show web-only message if on web platform
+  if (Platform.OS === 'web') {
+    return <WebOnlyMessage />;
+  }
 
   const [cardComplete, setCardComplete] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleAddPaymentMethod = async () => {
-    if (!user || !cardComplete) {
+    if (!user || !cardComplete || !stripe) {
       return;
     }
 
@@ -42,7 +68,7 @@ const PaymentMethodScreenContent: React.FC = () => {
       if (setupError) throw setupError;
 
       // Confirm setup intent with card details
-      const { error: confirmError } = await confirmSetupIntent(setupData.client_secret, {
+      const { error: confirmError } = await stripe.confirmSetupIntent(setupData.client_secret, {
         paymentMethodType: 'Card',
       });
 
@@ -80,23 +106,25 @@ const PaymentMethodScreenContent: React.FC = () => {
 
       <View style={styles.cardContainer}>
         <Text style={styles.label}>Card Details</Text>
-        <CardField
-          postalCodeEnabled={true}
-          placeholders={{
-            number: '4242 4242 4242 4242',
-          }}
-          cardStyle={{
-            backgroundColor: COLORS.white,
-            textColor: COLORS.text,
-            borderWidth: 1,
-            borderColor: COLORS.border,
-            borderRadius: BORDER_RADIUS.md,
-          }}
-          style={styles.cardField}
-          onCardChange={(cardDetails) => {
-            setCardComplete(cardDetails.complete);
-          }}
-        />
+        {CardField && (
+          <CardField
+            postalCodeEnabled={true}
+            placeholders={{
+              number: '4242 4242 4242 4242',
+            }}
+            cardStyle={{
+              backgroundColor: COLORS.white,
+              textColor: COLORS.text,
+              borderWidth: 1,
+              borderColor: COLORS.border,
+              borderRadius: BORDER_RADIUS.md,
+            }}
+            style={styles.cardField}
+            onCardChange={(cardDetails) => {
+              setCardComplete(cardDetails.complete);
+            }}
+          />
+        )}
       </View>
 
       <View style={styles.securityInfo}>
@@ -135,7 +163,18 @@ const PaymentMethodScreenContent: React.FC = () => {
 };
 
 export const PaymentMethodScreen: React.FC = () => {
+  // On web, show message directly without Stripe provider
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.container}>
+        <PaymentMethodScreenContent />
+      </View>
+    );
+  }
+
+  // On native platforms, wrap with Stripe provider
   const publishableKey = getStripePublishableKey();
+  const { StripeProvider } = require('@stripe/stripe-react-native');
 
   return (
     <StripeProvider publishableKey={publishableKey}>
@@ -241,5 +280,36 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     color: COLORS.text,
     lineHeight: 20,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+  },
+  webMessageContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.xl,
+    margin: SPACING.lg,
+    alignItems: 'center',
+    ...SHADOWS.lg,
+  },
+  webMessageIcon: {
+    fontSize: 64,
+    marginBottom: SPACING.md,
+  },
+  webMessageTitle: {
+    fontSize: FONT_SIZES.xl,
+    fontWeight: FONT_WEIGHTS.bold as any,
+    color: COLORS.text,
+    marginBottom: SPACING.md,
+    textAlign: 'center',
+  },
+  webMessageText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });
