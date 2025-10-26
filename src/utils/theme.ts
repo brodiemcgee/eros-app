@@ -1,4 +1,4 @@
-// Eros app theme (inspired by Hinge's sophisticated aesthetic)
+// Thirsty app theme (inspired by Hinge's sophisticated aesthetic)
 
 export const COLORS = {
   // Primary colors - Purple (Hinge-inspired)

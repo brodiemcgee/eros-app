@@ -101,7 +101,7 @@ export const LoginScreen: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
-        <Text style={styles.logo}>EROS</Text>
+        <Text style={styles.logo}>Thirsty</Text>
         <Text style={styles.subtitle}>Welcome back</Text>
 
         <View style={styles.form}>

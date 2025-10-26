@@ -87,7 +87,7 @@ const WebOnlyMessage: React.FC = () => {
           Premium subscriptions are only available through our mobile app.
         </Text>
         <Text style={[styles.webMessageText, { marginTop: SPACING.md }]}>
-          Download the EROS app from the App Store or Google Play to upgrade to Premium.
+          Download the Thirsty app from the App Store or Google Play to upgrade to Premium.
         </Text>
       </View>
     </View>
@@ -150,10 +150,10 @@ const SubscriptionScreenContent: React.FC = () => {
       // Initialize payment sheet
       const { error: initError } = await stripe.initPaymentSheet({
         paymentIntentClientSecret: clientSecret,
-        merchantDisplayName: 'EROS',
+        merchantDisplayName: 'Thirsty',
         customerId,
         customerEphemeralKeySecret: ephemeralKey,
-        returnURL: 'eros://subscription-success',
+        returnURL: 'thirsty://subscription-success',
         defaultBillingDetails: {
           email: user.email,
         },

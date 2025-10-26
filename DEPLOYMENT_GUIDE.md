@@ -1,6 +1,6 @@
-# EROS Complete Deployment Guide
+# Thirsty Complete Deployment Guide
 
-Complete step-by-step guide for deploying the EROS dating app and admin dashboard to production.
+Complete step-by-step guide for deploying the Thirsty dating app and admin dashboard to production.
 
 ## Table of Contents
 
@@ -185,7 +185,7 @@ ON CONFLICT DO NOTHING;
 ### Step 1: Login to Supabase CLI
 
 ```bash
-cd /Users/brodie/Documents/Projects/hook/eros-app
+cd /Users/brodie/Documents/Projects/hook/thirsty-app
 supabase login
 ```
 
@@ -301,13 +301,13 @@ supabase functions logs stripe-webhook --tail
 
 ## Admin Dashboard Deployment (Vercel)
 
-The admin dashboard is already on GitHub: https://github.com/brodiemcgee/eros-admin
+The admin dashboard is already on GitHub: https://github.com/brodiemcgee/thirsty-admin
 
 ### Step 1: Connect Repository to Vercel
 
 1. Go to https://vercel.com
 2. Click **Add New** > **Project**
-3. Import Git Repository: `brodiemcgee/eros-admin`
+3. Import Git Repository: `brodiemcgee/thirsty-admin`
 4. Click **Import**
 
 ### Step 2: Configure Build Settings
@@ -333,7 +333,7 @@ VITE_SUPABASE_ANON_KEY = [your-anon-key]
 
 1. Click **Deploy**
 2. Wait for build to complete (~2-3 minutes)
-3. Vercel will provide a URL like: `https://eros-admin.vercel.app`
+3. Vercel will provide a URL like: `https://thirsty-admin.vercel.app`
 
 ### Step 5: Verify Deployment
 
@@ -350,7 +350,7 @@ VITE_SUPABASE_ANON_KEY = [your-anon-key]
 ### Step 6: Set Up Custom Domain (Optional)
 
 1. In Vercel project settings > Domains
-2. Add your custom domain (e.g., `admin.eros.app`)
+2. Add your custom domain (e.g., `admin.thirsty.app`)
 3. Follow DNS configuration instructions
 4. Wait for SSL certificate provisioning
 
@@ -383,15 +383,15 @@ Edit `app.json` and update these fields:
 ```json
 {
   "expo": {
-    "name": "EROS",
-    "slug": "eros-app",
+    "name": "Thirsty",
+    "slug": "thirsty-app",
     "version": "1.0.0",
     "ios": {
-      "bundleIdentifier": "com.yourcompany.eros",
+      "bundleIdentifier": "com.yourcompany.thirsty",
       "buildNumber": "1"
     },
     "android": {
-      "package": "com.yourcompany.eros",
+      "package": "com.yourcompany.thirsty",
       "versionCode": 1
     }
   }
@@ -895,7 +895,7 @@ Track these KPIs post-launch:
 
 ## Conclusion
 
-You're now ready to deploy EROS to production! Follow this guide step-by-step, and don't skip any verification steps.
+You're now ready to deploy Thirsty to production! Follow this guide step-by-step, and don't skip any verification steps.
 
 **Remember**:
 - Test thoroughly before production launch

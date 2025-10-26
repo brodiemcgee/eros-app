@@ -26,7 +26,7 @@ const WebOnlyMessage: React.FC = () => {
           Payment method management is only available through our mobile app.
         </Text>
         <Text style={[styles.webMessageText, { marginTop: SPACING.md }]}>
-          Download the EROS app to manage your payment methods.
+          Download the Thirsty app to manage your payment methods.
         </Text>
       </View>
     </View>

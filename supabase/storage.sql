@@ -1,4 +1,4 @@
--- Eros App Storage Buckets Configuration
+-- Thirsty App Storage Buckets Configuration
 
 -- Create storage buckets for different media types
 INSERT INTO storage.buckets (id, name, public)

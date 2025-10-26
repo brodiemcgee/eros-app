@@ -31,7 +31,7 @@ export const SplashScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>EROS</Text>
+      <Text style={styles.logo}>Thirsty</Text>
       <Text style={styles.tagline}>Connect. Meet. Explore.</Text>
       <ActivityIndicator
         size="large"

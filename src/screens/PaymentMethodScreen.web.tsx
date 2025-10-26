@@ -13,7 +13,7 @@ export const PaymentMethodScreen: React.FC = () => {
           Payment method management is available exclusively through our mobile app for security reasons.
         </Text>
         <Text style={[styles.message, { marginTop: SPACING.md }]}>
-          Download the EROS mobile app to:
+          Download the Thirsty mobile app to:
         </Text>
         <View style={styles.featuresList}>
           <Text style={styles.feature}>💳 Add payment methods</Text>

@@ -78,11 +78,11 @@ export const OnboardingProfileScreen: React.FC = () => {
 
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       if (age - 1 < 18) {
-        showError('You must be at least 18 years old to use Eros');
+        showError('You must be at least 18 years old to use Thirsty');
         return;
       }
     } else if (age < 18) {
-      showError('You must be at least 18 years old to use Eros');
+      showError('You must be at least 18 years old to use Thirsty');
       return;
     }
 

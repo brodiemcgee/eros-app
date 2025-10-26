@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "EROS",
-    "slug": "eros-app",
+    "name": "Thirsty",
+    "slug": "thirsty-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "scheme": "eros",
+    "scheme": "thirsty",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -17,13 +17,13 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.eros.app",
+      "bundleIdentifier": "com.thirsty.app",
       "buildNumber": "1.0.0",
       "infoPlist": {
-        "NSCameraUsageDescription": "EROS needs access to your camera to take profile photos",
-        "NSPhotoLibraryUsageDescription": "EROS needs access to your photo library to upload profile photos",
-        "NSLocationWhenInUseUsageDescription": "EROS uses your location to show you nearby users",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "EROS uses your location to show you nearby users"
+        "NSCameraUsageDescription": "Thirsty needs access to your camera to take profile photos",
+        "NSPhotoLibraryUsageDescription": "Thirsty needs access to your photo library to upload profile photos",
+        "NSLocationWhenInUseUsageDescription": "Thirsty uses your location to show you nearby users",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Thirsty uses your location to show you nearby users"
       },
       "config": {
         "usesNonExemptEncryption": false
@@ -34,7 +34,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#7C3AED"
       },
-      "package": "com.eros.app",
+      "package": "com.thirsty.app",
       "versionCode": 1,
       "permissions": [
         "ACCESS_COARSE_LOCATION",

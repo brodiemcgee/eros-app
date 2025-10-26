@@ -1,4 +1,4 @@
-# EROS Dating App
+# Thirsty Dating App
 
 A modern, Hinge-inspired dating application built with React Native, Expo, and Supabase.
 
@@ -38,7 +38,7 @@ A modern, Hinge-inspired dating application built with React Native, Expo, and S
 
 ```bash
 git clone <repository-url>
-cd eros-app
+cd thirsty-app
 npm install
 ```
 
@@ -168,7 +168,7 @@ vercel
 ## Project Structure
 
 ```
-eros-app/
+thirsty-app/
 ├── src/
 │   ├── components/          # Reusable components
 │   │   ├── PhotoGallery.tsx
@@ -371,7 +371,7 @@ Before going to production:
 
 For issues or questions:
 - GitHub Issues: [Repository URL]
-- Email: support@erosapp.com
+- Email: support@thirstyapp.com
 - Documentation: [Docs URL]
 
 ## License

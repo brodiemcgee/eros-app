@@ -1,5 +1,5 @@
 -- ============================================
--- EROS ADMIN DASHBOARD DATABASE SCHEMA
+-- THIRSTY ADMIN DASHBOARD DATABASE SCHEMA
 -- Created: 2025-01-22
 -- Purpose: Admin panel, moderation, compliance, payments
 -- ============================================

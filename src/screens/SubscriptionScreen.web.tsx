@@ -13,7 +13,7 @@ export const SubscriptionScreen: React.FC = () => {
           Premium subscriptions are available exclusively through our mobile app.
         </Text>
         <Text style={[styles.message, { marginTop: SPACING.md }]}>
-          Download EROS from the App Store or Google Play to:
+          Download Thirsty from the App Store or Google Play to:
         </Text>
         <View style={styles.featuresList}>
           <Text style={styles.feature}>⭐ Upgrade to Premium</Text>

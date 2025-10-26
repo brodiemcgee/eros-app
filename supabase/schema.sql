@@ -1,4 +1,4 @@
--- Eros App Database Schema
+-- Thirsty App Database Schema
 -- Complete Grindr-like functionality
 
 -- Enable necessary extensions

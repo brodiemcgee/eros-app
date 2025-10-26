@@ -1,6 +1,6 @@
-# EROS Database Setup Guide
+# Thirsty Database Setup Guide
 
-Complete guide for setting up the Supabase database for the EROS dating app.
+Complete guide for setting up the Supabase database for the Thirsty dating app.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ Complete guide for setting up the Supabase database for the EROS dating app.
 1. Go to https://supabase.com/dashboard
 2. Click "New Project"
 3. Fill in:
-   - **Project Name**: eros-app
+   - **Project Name**: thirsty-app
    - **Database Password**: (save this securely!)
    - **Region**: Choose closest to your users
    - **Pricing Plan**: Free (for development)

@@ -119,7 +119,7 @@ export const SignupScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Text style={styles.logo}>EROS</Text>
+          <Text style={styles.logo}>Thirsty</Text>
           <Text style={styles.subtitle}>Create your account</Text>
 
           <View style={styles.form}>
