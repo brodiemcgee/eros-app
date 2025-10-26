@@ -172,13 +172,38 @@ export const SettingsScreen: React.FC = () => {
         </View>
       </View>
 
+      {/* Premium Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>PREMIUM</Text>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => navigation.navigate('Subscription')}
+        >
+          <View style={styles.settingWithIcon}>
+            <Text style={styles.premiumIcon}>⭐</Text>
+            <Text style={styles.settingText}>Upgrade to Premium</Text>
+          </View>
+          <Text style={styles.settingArrow}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => navigation.navigate('BillingHistory')}
+        >
+          <Text style={styles.settingText}>Billing History</Text>
+          <Text style={styles.settingArrow}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => navigation.navigate('PaymentMethod')}
+        >
+          <Text style={styles.settingText}>Payment Methods</Text>
+          <Text style={styles.settingArrow}>›</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Account Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>ACCOUNT</Text>
-        <TouchableOpacity style={styles.settingItem}>
-          <Text style={styles.settingText}>Subscription & Billing</Text>
-          <Text style={styles.settingArrow}>›</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.settingItem} onPress={handleLogout}>
           <Text style={[styles.settingText, styles.logoutText]}>Logout</Text>
         </TouchableOpacity>
@@ -281,6 +306,15 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textMuted,
+  },
+  settingWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  premiumIcon: {
+    fontSize: FONT_SIZES.xl,
+    marginRight: SPACING.sm,
   },
   footer: {
     height: SPACING.xxl,

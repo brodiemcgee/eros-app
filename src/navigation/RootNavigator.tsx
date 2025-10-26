@@ -14,6 +14,9 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { FiltersScreen } from '../screens/FiltersScreen';
 import { BlockedUsersScreen } from '../screens/BlockedUsersScreen';
 import { ReportUserScreen } from '../screens/ReportUserScreen';
+import { SubscriptionScreen } from '../screens/SubscriptionScreen';
+import { PaymentMethodScreen } from '../screens/PaymentMethodScreen';
+import { BillingHistoryScreen } from '../screens/BillingHistoryScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -50,6 +53,13 @@ export const RootNavigator: React.FC = () => {
           component={ReportUserScreen}
           options={{ presentation: 'modal' }}
         />
+        <Stack.Screen
+          name="Subscription"
+          component={SubscriptionScreen}
+          options={{ presentation: 'modal' }}
+        />
+        <Stack.Screen name="PaymentMethod" component={PaymentMethodScreen} />
+        <Stack.Screen name="BillingHistory" component={BillingHistoryScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

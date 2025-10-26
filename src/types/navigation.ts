@@ -22,6 +22,11 @@ export type RootStackParamList = {
   AlbumDetail: { albumId: string };
   ReportUser: { userId: string };
   PremiumUpgrade: undefined;
+
+  // Payment & Subscription screens
+  Subscription: undefined;
+  PaymentMethod: undefined;
+  BillingHistory: undefined;
 };
 
 export type MainTabsParamList = {
