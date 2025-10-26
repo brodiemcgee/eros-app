@@ -51,6 +51,9 @@ export const COLORS = {
   online: '#00D448',
   offline: '#BDBDBD',
 
+  // Verification badge
+  verified: '#1DA1F2', // Twitter/X blue for verified badge
+
   // Card colors
   cardBackground: '#FFFFFF',
   cardBorder: '#E0E0E0',

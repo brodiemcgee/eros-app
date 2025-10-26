@@ -10,13 +10,23 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES, SHADOWS } from '../utils/theme';
 import Slider from '@react-native-community/slider';
+import { useFeature } from '../hooks/useFeature';
+import { FEATURES, FREE_LIMITS } from '../constants/features';
+import { Alert } from 'react-native';
 
 export const FiltersScreen: React.FC = () => {
   const navigation = useNavigation();
 
+  // Feature gates
+  const hasAdvancedFilters = useFeature(FEATURES.ADVANCED_FILTERS);
+  const hasExtendedDistance = useFeature(FEATURES.EXTENDED_DISTANCE);
+  const hasOnlineFilter = useFeature(FEATURES.ONLINE_ONLY_FILTER);
+  const hasVerifiedFilter = useFeature(FEATURES.VERIFIED_ONLY_FILTER);
+  const hasTribeFilters = useFeature(FEATURES.TRIBE_FILTERS);
+
   // Filter states
   const [ageRange, setAgeRange] = useState([18, 99]);
-  const [distanceKm, setDistanceKm] = useState(50);
+  const [distanceKm, setDistanceKm] = useState<number>(FREE_LIMITS.MAX_SEARCH_DISTANCE_KM);
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [hasPhotoOnly, setHasPhotoOnly] = useState(false);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -43,13 +53,26 @@ export const FiltersScreen: React.FC = () => {
 
   const handleReset = () => {
     setAgeRange([18, 99]);
-    setDistanceKm(50);
+    setDistanceKm(FREE_LIMITS.MAX_SEARCH_DISTANCE_KM);
     setOnlineOnly(false);
     setHasPhotoOnly(false);
     setVerifiedOnly(false);
     setSelectedBodyTypes([]);
     setSelectedPositions([]);
     setSelectedTribes([]);
+  };
+
+  const handleDistanceChange = (value: number) => {
+    // Enforce distance limit for free users
+    if (!hasExtendedDistance && value > FREE_LIMITS.MAX_SEARCH_DISTANCE_KM) {
+      Alert.alert(
+        'Premium Feature',
+        `Extended distance search is a premium feature. Free users can search up to ${FREE_LIMITS.MAX_SEARCH_DISTANCE_KM}km.`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    setDistanceKm(value);
   };
 
   return (
@@ -97,15 +120,22 @@ export const FiltersScreen: React.FC = () => {
 
         {/* Distance */}
         <View style={styles.filterSection}>
-          <Text style={styles.filterTitle}>Maximum Distance</Text>
-          <Text style={styles.filterValue}>{distanceKm} km</Text>
+          <View style={styles.filterHeaderRow}>
+            <Text style={styles.filterTitle}>Maximum Distance</Text>
+            {!hasExtendedDistance && (
+              <Text style={styles.premiumBadge}>👑 Premium: Up to 100km</Text>
+            )}
+          </View>
+          <Text style={styles.filterValue}>
+            {distanceKm} km {!hasExtendedDistance && distanceKm >= FREE_LIMITS.MAX_SEARCH_DISTANCE_KM && '(Free limit)'}
+          </Text>
           <Slider
             style={styles.slider}
             minimumValue={1}
-            maximumValue={100}
+            maximumValue={hasExtendedDistance ? 100 : FREE_LIMITS.MAX_SEARCH_DISTANCE_KM}
             step={1}
             value={distanceKm}
-            onValueChange={setDistanceKm}
+            onValueChange={handleDistanceChange}
             minimumTrackTintColor={COLORS.primary}
             maximumTrackTintColor={COLORS.border}
             thumbTintColor={COLORS.primary}
@@ -114,15 +144,24 @@ export const FiltersScreen: React.FC = () => {
 
         {/* Toggle Filters */}
         <View style={styles.filterSection}>
-          <View style={styles.toggleRow}>
-            <Text style={styles.filterTitle}>Online Now</Text>
-            <Switch
-              value={onlineOnly}
-              onValueChange={setOnlineOnly}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={COLORS.text}
-            />
-          </View>
+          {hasOnlineFilter ? (
+            <View style={styles.toggleRow}>
+              <Text style={styles.filterTitle}>Online Now</Text>
+              <Switch
+                value={onlineOnly}
+                onValueChange={setOnlineOnly}
+                trackColor={{ false: COLORS.border, true: COLORS.primary }}
+                thumbColor={COLORS.text}
+              />
+            </View>
+          ) : (
+            <View style={styles.toggleRow}>
+              <Text style={[styles.filterTitle, styles.disabledFilter]}>
+                Online Now 👑
+              </Text>
+              <Text style={styles.premiumLabel}>Premium</Text>
+            </View>
+          )}
 
           <View style={styles.toggleRow}>
             <Text style={styles.filterTitle}>Has Photo</Text>
@@ -134,66 +173,101 @@ export const FiltersScreen: React.FC = () => {
             />
           </View>
 
-          <View style={styles.toggleRow}>
-            <Text style={styles.filterTitle}>Verified Only</Text>
-            <Switch
-              value={verifiedOnly}
-              onValueChange={setVerifiedOnly}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={COLORS.text}
-            />
-          </View>
+          {hasVerifiedFilter ? (
+            <View style={styles.toggleRow}>
+              <Text style={styles.filterTitle}>Verified Only</Text>
+              <Switch
+                value={verifiedOnly}
+                onValueChange={setVerifiedOnly}
+                trackColor={{ false: COLORS.border, true: COLORS.primary }}
+                thumbColor={COLORS.text}
+              />
+            </View>
+          ) : (
+            <View style={styles.toggleRow}>
+              <Text style={[styles.filterTitle, styles.disabledFilter]}>
+                Verified Only 👑
+              </Text>
+              <Text style={styles.premiumLabel}>Premium</Text>
+            </View>
+          )}
         </View>
 
-        {/* Body Type */}
+        {/* Advanced Filters Section */}
         <View style={styles.filterSection}>
-          <Text style={styles.filterTitle}>Body Type</Text>
-          <View style={styles.chipsContainer}>
-            {bodyTypes.map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.chip,
-                  selectedBodyTypes.includes(type) && styles.chipSelected,
-                ]}
-                onPress={() => toggleSelection(type, selectedBodyTypes, setSelectedBodyTypes)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    selectedBodyTypes.includes(type) && styles.chipTextSelected,
-                  ]}
-                >
-                  {type}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.filterHeaderRow}>
+            <Text style={styles.sectionTitle}>Advanced Filters</Text>
+            {!hasAdvancedFilters && (
+              <Text style={styles.premiumBadge}>👑 Premium</Text>
+            )}
           </View>
-        </View>
 
-        {/* Position */}
-        <View style={styles.filterSection}>
-          <Text style={styles.filterTitle}>Position</Text>
-          <View style={styles.chipsContainer}>
-            {positions.map((position) => (
-              <TouchableOpacity
-                key={position}
-                style={[
-                  styles.chip,
-                  selectedPositions.includes(position) && styles.chipSelected,
-                ]}
-                onPress={() => toggleSelection(position, selectedPositions, setSelectedPositions)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    selectedPositions.includes(position) && styles.chipTextSelected,
-                  ]}
-                >
-                  {position}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          {/* Body Type */}
+          <View style={styles.advancedFilterGroup}>
+            <Text style={[styles.filterTitle, !hasAdvancedFilters && styles.disabledFilter]}>
+              Body Type
+            </Text>
+            {hasAdvancedFilters ? (
+              <View style={styles.chipsContainer}>
+                {bodyTypes.map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[
+                      styles.chip,
+                      selectedBodyTypes.includes(type) && styles.chipSelected,
+                    ]}
+                    onPress={() => toggleSelection(type, selectedBodyTypes, setSelectedBodyTypes)}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        selectedBodyTypes.includes(type) && styles.chipTextSelected,
+                      ]}
+                    >
+                      {type}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.lockedFilterOverlay}>
+                <Text style={styles.lockedText}>Unlock with Premium</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Position */}
+          <View style={styles.advancedFilterGroup}>
+            <Text style={[styles.filterTitle, !hasAdvancedFilters && styles.disabledFilter]}>
+              Position
+            </Text>
+            {hasAdvancedFilters ? (
+              <View style={styles.chipsContainer}>
+                {positions.map((position) => (
+                  <TouchableOpacity
+                    key={position}
+                    style={[
+                      styles.chip,
+                      selectedPositions.includes(position) && styles.chipSelected,
+                    ]}
+                    onPress={() => toggleSelection(position, selectedPositions, setSelectedPositions)}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        selectedPositions.includes(position) && styles.chipTextSelected,
+                      ]}
+                    >
+                      {position}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.lockedFilterOverlay}>
+                <Text style={styles.lockedText}>Unlock with Premium</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -304,5 +378,44 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.background,
+  },
+  filterHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+  },
+  sectionTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: FONT_WEIGHTS.bold as any,
+    color: COLORS.text,
+  },
+  premiumBadge: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.primary,
+    fontWeight: FONT_WEIGHTS.semibold as any,
+  },
+  premiumLabel: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.primary,
+    fontWeight: FONT_WEIGHTS.semibold as any,
+  },
+  disabledFilter: {
+    opacity: 0.5,
+  },
+  advancedFilterGroup: {
+    marginBottom: SPACING.lg,
+  },
+  lockedFilterOverlay: {
+    backgroundColor: COLORS.backgroundTertiary,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    marginTop: SPACING.sm,
+  },
+  lockedText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textMuted,
+    fontStyle: 'italic',
   },
 });

@@ -41,6 +41,10 @@ import {
   formatMeetingPreferences,
 } from '../utils/helpers';
 import { PhotoGallery } from '../components/PhotoGallery';
+import { VerifiedBadge } from '../components/VerifiedBadge';
+import { useFeature } from '../hooks/useFeature';
+import { FEATURES, FREE_LIMITS } from '../constants/features';
+import { supabase } from '../services/supabase';
 
 type ProfileDetailRouteProp = RouteProp<RootStackParamList, 'ProfileDetail'>;
 type ProfileDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProfileDetail'>;
@@ -49,6 +53,10 @@ export const ProfileDetailScreen: React.FC = () => {
   const route = useRoute<ProfileDetailRouteProp>();
   const navigation = useNavigation<ProfileDetailNavigationProp>();
   const { user } = useAuth();
+
+  // Feature gates
+  const hasUnlimitedTaps = useFeature(FEATURES.UNLIMITED_TAPS);
+  const hasUnlimitedFavorites = useFeature(FEATURES.UNLIMITED_FAVORITES);
 
   const [profile, setProfile] = useState<ProfileWithPhotos | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,6 +96,25 @@ export const ProfileDetailScreen: React.FC = () => {
       await removeFavorite(user.id, profile.id);
       setIsFav(false);
     } else {
+      // Check favorites limit for free users
+      if (!hasUnlimitedFavorites) {
+        const { data: favorites } = await supabase
+          .from('favorites')
+          .select('id')
+          .eq('user_id', user.id);
+
+        const favoriteCount = favorites?.length || 0;
+
+        if (favoriteCount >= FREE_LIMITS.MAX_FAVORITES) {
+          Alert.alert(
+            'Premium Feature',
+            `Free users can save up to ${FREE_LIMITS.MAX_FAVORITES} favorites. You currently have ${favoriteCount}. Upgrade to Premium for unlimited favorites.`,
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+      }
+
       await addFavorite(user.id, profile.id);
       setIsFav(true);
     }
@@ -107,6 +134,30 @@ export const ProfileDetailScreen: React.FC = () => {
 
   const handleTap = async (tapType: 'flame' | 'woof' | 'looking' | 'friendly' | 'hot') => {
     if (!user || !profile) return;
+
+    // Check taps limit for free users
+    if (!hasUnlimitedTaps) {
+      // Get start of today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const { data: taps } = await supabase
+        .from('taps')
+        .select('id')
+        .eq('sender_id', user.id)
+        .gte('created_at', today.toISOString());
+
+      const tapCount = taps?.length || 0;
+
+      if (tapCount >= FREE_LIMITS.MAX_TAPS_PER_DAY) {
+        Alert.alert(
+          'Daily Limit Reached',
+          `Free users can send up to ${FREE_LIMITS.MAX_TAPS_PER_DAY} taps per day. You've sent ${tapCount} today. Upgrade to Premium for unlimited taps.`,
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+    }
 
     const success = await sendTap(user.id, profile.id, tapType);
     if (success) {
@@ -178,6 +229,7 @@ export const ProfileDetailScreen: React.FC = () => {
           <View style={styles.nameRow}>
             <View style={styles.nameContainer}>
               <Text style={styles.name}>{profile.display_name}</Text>
+              {profile.is_verified && <VerifiedBadge size="medium" />}
               {profile.is_online && <View style={styles.onlineDot} />}
             </View>
             <TouchableOpacity onPress={handleFavorite}>

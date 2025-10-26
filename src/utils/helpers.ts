@@ -190,3 +190,17 @@ export const formatMeetingPreferences = (canHost: boolean, canTravel: boolean, a
   if (availableNow) prefs.push('Available now');
   return prefs;
 };
+
+// Format distance
+export const formatDistance = (distanceKm: number | null | undefined, unit: 'metric' | 'imperial' = 'metric'): string => {
+  if (!distanceKm && distanceKm !== 0) return 'Distance unknown';
+
+  if (unit === 'imperial') {
+    const miles = distanceKm * 0.621371;
+    if (miles < 0.1) return 'Less than 0.1 mi away';
+    return `${miles.toFixed(1)} mi away`;
+  }
+
+  if (distanceKm < 0.1) return 'Less than 0.1 km away';
+  return `${distanceKm.toFixed(1)} km away`;
+};

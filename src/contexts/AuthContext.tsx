@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, getCurrentUserProfile } from '../services/supabase';
 import { ProfileWithPhotos } from '../types/database';
+import { prefetchUserFeatures, clearFeatureCache } from '../services/features';
 
 interface AuthContextType {
   session: Session | null;
@@ -60,6 +61,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('[AuthContext] Profile loaded:', userProfile ? 'Found profile' : 'No profile found');
       if (userProfile) {
         console.log('[AuthContext] Profile ID:', userProfile.id, 'Name:', userProfile.display_name);
+
+        // Prefetch user features to warm up the cache
+        console.log('[AuthContext] Prefetching user features...');
+        await prefetchUserFeatures(userProfile.id);
+        console.log('[AuthContext] Features prefetched');
       }
       setProfile(userProfile as ProfileWithPhotos);
     } catch (error) {
@@ -72,6 +78,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshProfile = async () => {
+    // Clear feature cache before refreshing
+    if (user) {
+      clearFeatureCache(user.id);
+    }
     await loadProfile();
   };
 
@@ -112,6 +122,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    // Clear feature cache on sign out
+    if (user) {
+      clearFeatureCache(user.id);
+    }
     await supabase.auth.signOut();
     setProfile(null);
   };

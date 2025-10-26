@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,12 +13,15 @@ import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES, SHADOWS } from '../utils/theme';
 import { calculateAge, formatHeight, formatWeight, formatLookingFor } from '../utils/helpers';
+import { VerifiedBadge } from '../components/VerifiedBadge';
+import { VerificationPromptBanner } from '../components/VerificationPromptBanner';
 
 type ProfileScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { profile, signOut } = useAuth();
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   if (!profile) {
     return (
@@ -30,6 +33,7 @@ export const ProfileScreen: React.FC = () => {
 
   const age = calculateAge(profile.date_of_birth);
   const primaryPhoto = profile.photos?.find((p) => p.is_primary) || profile.photos?.[0];
+  const showVerificationPrompt = !profile.is_verified && !bannerDismissed;
 
   return (
     <ScrollView style={styles.container}>
@@ -48,7 +52,10 @@ export const ProfileScreen: React.FC = () => {
       )}
 
       <View style={styles.profileInfo}>
-        <Text style={styles.name}>{profile.display_name}</Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.name}>{profile.display_name}</Text>
+          {profile.is_verified && <VerifiedBadge size="medium" />}
+        </View>
         <Text style={styles.age}>{age} years old</Text>
 
         {profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
@@ -80,6 +87,15 @@ export const ProfileScreen: React.FC = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Looking For</Text>
             <Text style={styles.sectionContent}>{formatLookingFor(profile.looking_for)}</Text>
+          </View>
+        )}
+
+        {showVerificationPrompt && (
+          <View style={styles.bannerContainer}>
+            <VerificationPromptBanner
+              variant="full"
+              onDismiss={() => setBannerDismissed(true)}
+            />
           </View>
         )}
 
@@ -131,11 +147,16 @@ const styles = StyleSheet.create({
   profileInfo: {
     padding: SPACING.lg,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.xs,
+  },
   name: {
     fontSize: FONT_SIZES.xxxl, // 28px
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.text,
-    marginBottom: SPACING.xs,
   },
   age: {
     fontSize: FONT_SIZES.md,
@@ -193,6 +214,9 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     lineHeight: 26,
     fontFamily: FONT_FAMILIES.serif,
+  },
+  bannerContainer: {
+    marginBottom: SPACING.md,
   },
   editButton: {
     backgroundColor: COLORS.secondary, // Teal for primary CTA

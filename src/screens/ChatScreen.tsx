@@ -31,6 +31,9 @@ import {
 import { getProfileById } from '../services/profiles';
 import { formatRelativeTime } from '../utils/helpers';
 import { SavedPhrasesPicker } from '../components/SavedPhrasesPicker';
+import { useFeature } from '../hooks/useFeature';
+import { FEATURES, FREE_LIMITS } from '../constants/features';
+import { supabase } from '../services/supabase';
 
 type ChatRouteProp = RouteProp<RootStackParamList, 'Chat'>;
 type ChatNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Chat'>;
@@ -39,6 +42,14 @@ export const ChatScreen: React.FC = () => {
   const route = useRoute<ChatRouteProp>();
   const navigation = useNavigation<ChatNavigationProp>();
   const { user } = useAuth();
+
+  // Feature gates
+  const hasUnlimitedMessages = useFeature(FEATURES.UNLIMITED_MESSAGES);
+  const hasTypingIndicators = useFeature(FEATURES.TYPING_INDICATORS);
+  const hasReadReceipts = useFeature(FEATURES.READ_RECEIPTS);
+  const hasMessageDeletion = useFeature(FEATURES.MESSAGE_DELETION);
+  const hasSavedPhrases = useFeature(FEATURES.SAVED_PHRASES);
+  const hasMediaMessages = useFeature(FEATURES.MEDIA_MESSAGES);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
@@ -61,24 +72,29 @@ export const ChatScreen: React.FC = () => {
       setMessages((prev) => [...prev, newMessage]);
     });
 
-    // Subscribe to typing indicators
-    const typingChannel = subscribeToTypingIndicators(
-      route.params.conversationId,
-      user.id,
-      (isTyping) => {
-        setIsOtherUserTyping(isTyping);
-      }
-    );
+    // Subscribe to typing indicators (only if user has the feature)
+    let typingChannel: any = null;
+    if (hasTypingIndicators) {
+      typingChannel = subscribeToTypingIndicators(
+        route.params.conversationId,
+        user.id,
+        (isTyping) => {
+          setIsOtherUserTyping(isTyping);
+        }
+      );
+    }
 
     // Mark as read
     markConversationAsRead(route.params.conversationId, user.id);
 
     return () => {
       messagesChannel.unsubscribe();
-      typingChannel.unsubscribe();
+      if (typingChannel) {
+        typingChannel.unsubscribe();
+      }
 
       // Clean up typing indicator on unmount
-      if (user) {
+      if (user && hasTypingIndicators) {
         stopTyping(route.params.conversationId, user.id);
       }
 
@@ -87,7 +103,7 @@ export const ChatScreen: React.FC = () => {
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, []);
+  }, [hasTypingIndicators]);
 
   const loadMessages = async () => {
     const msgs = await getConversationMessages(route.params.conversationId);
@@ -112,29 +128,57 @@ export const ChatScreen: React.FC = () => {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Start typing indicator
-    if (text.trim().length > 0) {
-      startTyping(route.params.conversationId, user.id);
+    // Start typing indicator (only if user has the feature)
+    if (hasTypingIndicators) {
+      if (text.trim().length > 0) {
+        startTyping(route.params.conversationId, user.id);
 
-      // Auto-stop typing after 3 seconds of no input
-      typingTimeoutRef.current = setTimeout(() => {
+        // Auto-stop typing after 3 seconds of no input
+        typingTimeoutRef.current = setTimeout(() => {
+          stopTyping(route.params.conversationId, user.id);
+        }, 3000);
+      } else {
+        // Stop typing if text is empty
         stopTyping(route.params.conversationId, user.id);
-      }, 3000);
-    } else {
-      // Stop typing if text is empty
-      stopTyping(route.params.conversationId, user.id);
+      }
     }
   };
 
   const handleSend = async () => {
     if (!messageText.trim() || !user) return;
 
-    // Stop typing indicator immediately when sending
-    stopTyping(route.params.conversationId, user.id);
+    // Check message limit for free users
+    if (!hasUnlimitedMessages) {
+      // Get start of today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-    // Clear timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+      const { data: messagesToday } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('sender_id', user.id)
+        .gte('created_at', today.toISOString());
+
+      const messageCount = messagesToday?.length || 0;
+
+      if (messageCount >= FREE_LIMITS.MAX_MESSAGES_PER_DAY) {
+        Alert.alert(
+          'Daily Limit Reached',
+          `Free users can send up to ${FREE_LIMITS.MAX_MESSAGES_PER_DAY} messages per day. You've sent ${messageCount} today. Upgrade to Premium for unlimited messaging.`,
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+    }
+
+    // Stop typing indicator immediately when sending (only if user has the feature)
+    if (hasTypingIndicators) {
+      stopTyping(route.params.conversationId, user.id);
+
+      // Clear timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     }
 
     const sent = await sendMessage(
@@ -172,6 +216,19 @@ export const ChatScreen: React.FC = () => {
 
   const handleUnsendMessage = () => {
     if (!selectedMessage || !user) return;
+
+    // Check if user has message deletion feature
+    if (!hasMessageDeletion) {
+      Alert.alert(
+        'Premium Feature',
+        'Unsending messages is a premium feature. Upgrade to unsend messages.',
+        [{ text: 'OK', onPress: () => {
+          setShowMessageActions(false);
+          setSelectedMessage(null);
+        }}]
+      );
+      return;
+    }
 
     // Only allow unsending own messages
     if (selectedMessage.sender_id !== user.id) {
@@ -256,8 +313,15 @@ export const ChatScreen: React.FC = () => {
               isMyMessage ? styles.myMessageBubble : styles.otherMessageBubble,
             ]}
           >
-            {item.media_url && (
+            {item.media_url && hasMediaMessages && (
               <Image source={{ uri: item.media_url }} style={styles.messageImage} />
+            )}
+            {item.media_url && !hasMediaMessages && (
+              <View style={styles.premiumMediaPlaceholder}>
+                <Text style={styles.premiumMediaText}>
+                  👑 Media messages are a premium feature
+                </Text>
+              </View>
             )}
             {item.content && (
               <Text
@@ -270,7 +334,12 @@ export const ChatScreen: React.FC = () => {
               </Text>
             )}
           </View>
-          <Text style={styles.messageTime}>{formatRelativeTime(item.created_at)}</Text>
+          <View style={styles.messageFooter}>
+            <Text style={styles.messageTime}>{formatRelativeTime(item.created_at)}</Text>
+            {hasReadReceipts && isMyMessage && item.is_read && (
+              <Text style={styles.readReceipt}>✓✓ Read</Text>
+            )}
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -300,19 +369,21 @@ export const ChatScreen: React.FC = () => {
         onLayout={() => flatListRef.current?.scrollToEnd()}
       />
 
-      {isOtherUserTyping && (
+      {hasTypingIndicators && isOtherUserTyping && (
         <View style={styles.typingIndicatorContainer}>
           <Text style={styles.typingIndicatorText}>{otherUserName} is typing...</Text>
         </View>
       )}
 
       <View style={styles.inputContainer}>
-        <TouchableOpacity
-          style={styles.phrasesButton}
-          onPress={() => setShowPhrasesPicker(true)}
-        >
-          <Text style={styles.phrasesButtonText}>💬</Text>
-        </TouchableOpacity>
+        {hasSavedPhrases && (
+          <TouchableOpacity
+            style={styles.phrasesButton}
+            onPress={() => setShowPhrasesPicker(true)}
+          >
+            <Text style={styles.phrasesButtonText}>💬</Text>
+          </TouchableOpacity>
+        )}
         <TextInput
           style={styles.input}
           placeholder="Type a message..."
@@ -330,7 +401,7 @@ export const ChatScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {user && (
+      {user && hasSavedPhrases && (
         <SavedPhrasesPicker
           visible={showPhrasesPicker}
           userId={user.id}
@@ -359,7 +430,7 @@ export const ChatScreen: React.FC = () => {
             {selectedMessage && selectedMessage.sender_id === user?.id && (
               <TouchableOpacity style={styles.messageAction} onPress={handleUnsendMessage}>
                 <Text style={[styles.messageActionText, styles.messageActionDanger]}>
-                  🗑️ Unsend
+                  {hasMessageDeletion ? '🗑️ Unsend' : '👑 Unsend (Premium)'}
                 </Text>
               </TouchableOpacity>
             )}
@@ -448,10 +519,36 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
     marginBottom: SPACING.xs,
   },
+  messageFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: SPACING.xs,
+  },
   messageTime: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textMuted,
-    marginTop: SPACING.xs,
+  },
+  readReceipt: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.secondary,
+    marginLeft: SPACING.xs,
+    fontWeight: FONT_WEIGHTS.semibold as any,
+  },
+  premiumMediaPlaceholder: {
+    width: 200,
+    height: 200,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.backgroundTertiary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.md,
+    marginBottom: SPACING.xs,
+  },
+  premiumMediaText: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textMuted,
+    textAlign: 'center',
   },
   typingIndicatorContainer: {
     paddingHorizontal: SPACING.md,

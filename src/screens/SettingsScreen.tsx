@@ -5,12 +5,24 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES, SHADOWS } from '../utils/theme';
+import { useFeature } from '../hooks/useFeature';
+import { FEATURES } from '../constants/features';
+import { useVerified } from '../hooks/useVerified';
 
 type SettingsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Settings'>;
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<SettingsNavigationProp>();
   const { signOut } = useAuth();
+
+  // Verification status
+  const { isVerified } = useVerified();
+
+  // Feature gates for privacy settings
+  const canHideOnlineStatus = useFeature(FEATURES.HIDE_ONLINE_STATUS);
+  const canHideDistance = useFeature(FEATURES.HIDE_DISTANCE);
+  const canHideAge = useFeature(FEATURES.HIDE_AGE);
+  const hasStealthMode = useFeature(FEATURES.STEALTH_MODE);
 
   // Privacy settings (in production, these would be loaded from and saved to the database)
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
@@ -75,6 +87,18 @@ export const SettingsScreen: React.FC = () => {
           <Text style={styles.settingArrow}>›</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.settingItem, isVerified && styles.verifiedSettingItem]}
+          onPress={() => navigation.navigate('AgeVerification')}
+        >
+          <View style={styles.settingWithIcon}>
+            <Text style={styles.verificationIcon}>{isVerified ? '✓' : '🛡️'}</Text>
+            <Text style={[styles.settingText, isVerified && styles.verifiedText]}>
+              {isVerified ? 'Verified' : 'Get Verified'}
+            </Text>
+          </View>
+          <Text style={styles.settingArrow}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={styles.settingItem}
           onPress={() => navigation.navigate('SavedPhrases' as any)}
         >
@@ -87,39 +111,103 @@ export const SettingsScreen: React.FC = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>PRIVACY</Text>
         <View style={styles.settingItem}>
-          <Text style={styles.settingText}>Show Online Status</Text>
+          <View style={styles.settingLabelContainer}>
+            <Text style={[styles.settingText, !canHideOnlineStatus && styles.disabledText]}>
+              Show Online Status
+            </Text>
+            {!canHideOnlineStatus && <Text style={styles.premiumBadge}>👑 Premium</Text>}
+          </View>
           <Switch
             value={showOnlineStatus}
-            onValueChange={setShowOnlineStatus}
+            onValueChange={(value) => {
+              if (!canHideOnlineStatus && !value) {
+                Alert.alert(
+                  'Premium Feature',
+                  'Hiding your online status is a premium feature. Upgrade to Premium to browse privately.',
+                  [{ text: 'OK' }]
+                );
+                return;
+              }
+              setShowOnlineStatus(value);
+            }}
             trackColor={{ false: COLORS.border, true: COLORS.primary }}
             thumbColor={COLORS.text}
+            disabled={!canHideOnlineStatus && showOnlineStatus}
           />
         </View>
         <View style={styles.settingItem}>
-          <Text style={styles.settingText}>Show Distance</Text>
+          <View style={styles.settingLabelContainer}>
+            <Text style={[styles.settingText, !canHideDistance && styles.disabledText]}>
+              Show Distance
+            </Text>
+            {!canHideDistance && <Text style={styles.premiumBadge}>👑 Premium</Text>}
+          </View>
           <Switch
             value={showDistance}
-            onValueChange={setShowDistance}
+            onValueChange={(value) => {
+              if (!canHideDistance && !value) {
+                Alert.alert(
+                  'Premium Feature',
+                  'Hiding your distance is a premium feature. Upgrade to Premium for enhanced privacy.',
+                  [{ text: 'OK' }]
+                );
+                return;
+              }
+              setShowDistance(value);
+            }}
             trackColor={{ false: COLORS.border, true: COLORS.primary }}
             thumbColor={COLORS.text}
+            disabled={!canHideDistance && showDistance}
           />
         </View>
         <View style={styles.settingItem}>
-          <Text style={styles.settingText}>Show Last Active</Text>
+          <View style={styles.settingLabelContainer}>
+            <Text style={[styles.settingText, !canHideAge && styles.disabledText]}>
+              Show Age
+            </Text>
+            {!canHideAge && <Text style={styles.premiumBadge}>👑 Premium</Text>}
+          </View>
           <Switch
             value={showLastActive}
-            onValueChange={setShowLastActive}
+            onValueChange={(value) => {
+              if (!canHideAge && !value) {
+                Alert.alert(
+                  'Premium Feature',
+                  'Hiding your age is a premium feature. Upgrade to Premium for enhanced privacy.',
+                  [{ text: 'OK' }]
+                );
+                return;
+              }
+              setShowLastActive(value);
+            }}
             trackColor={{ false: COLORS.border, true: COLORS.primary }}
             thumbColor={COLORS.text}
+            disabled={!canHideAge && showLastActive}
           />
         </View>
         <View style={styles.settingItem}>
-          <Text style={styles.settingText}>Allow Profile Views</Text>
+          <View style={styles.settingLabelContainer}>
+            <Text style={[styles.settingText, !hasStealthMode && styles.disabledText]}>
+              Stealth Mode (Browse Anonymously)
+            </Text>
+            {!hasStealthMode && <Text style={styles.premiumBadge}>👑 Premium</Text>}
+          </View>
           <Switch
-            value={allowProfileViews}
-            onValueChange={setAllowProfileViews}
+            value={!allowProfileViews}
+            onValueChange={(value) => {
+              if (!hasStealthMode && value) {
+                Alert.alert(
+                  'Premium Feature',
+                  'Stealth Mode is a premium feature. Upgrade to browse profiles without leaving view records.',
+                  [{ text: 'OK' }]
+                );
+                return;
+              }
+              setAllowProfileViews(!value);
+            }}
             trackColor={{ false: COLORS.border, true: COLORS.primary }}
             thumbColor={COLORS.text}
+            disabled={!hasStealthMode && allowProfileViews}
           />
         </View>
         <TouchableOpacity
@@ -318,5 +406,32 @@ const styles = StyleSheet.create({
   },
   footer: {
     height: SPACING.xxl,
+  },
+  settingLabelContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  premiumBadge: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.primary,
+    fontWeight: FONT_WEIGHTS.semibold as any,
+  },
+  disabledText: {
+    opacity: 0.6,
+  },
+  verificationIcon: {
+    fontSize: FONT_SIZES.xl,
+    marginRight: SPACING.sm,
+  },
+  verifiedSettingItem: {
+    borderColor: COLORS.verified,
+    borderWidth: 2,
+    backgroundColor: COLORS.verified + '08', // 8% opacity
+  },
+  verifiedText: {
+    color: COLORS.verified,
+    fontWeight: FONT_WEIGHTS.semibold as any,
   },
 });

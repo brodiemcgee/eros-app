@@ -21,6 +21,7 @@ import {
   UserSubscription,
 } from '../services/stripe';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../utils/theme';
+import { useFeatures, useIsFreeTier } from '../hooks/useFeature';
 
 const PlanCard: React.FC<{
   plan: SubscriptionPlan;
@@ -105,6 +106,10 @@ const SubscriptionScreenContent: React.FC = () => {
   const [currentSubscription, setCurrentSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
+
+  // Get user's current features
+  const { features, loading: featuresLoading } = useFeatures();
+  const isFreeTier = useIsFreeTier();
 
   // Show web-only message if on web platform
   if (Platform.OS === 'web') {
@@ -206,11 +211,39 @@ const SubscriptionScreenContent: React.FC = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Upgrade to Premium</Text>
+        <Text style={styles.title}>
+          {isFreeTier ? 'Upgrade to Premium' : 'Manage Subscription'}
+        </Text>
         <Text style={styles.subtitle}>
-          Unlock exclusive features and enhance your experience
+          {isFreeTier
+            ? 'Unlock exclusive features and enhance your experience'
+            : 'You have access to premium features'}
         </Text>
       </View>
+
+      {/* Current Features */}
+      {!featuresLoading && features.length > 0 && (
+        <View style={styles.currentFeaturesSection}>
+          <Text style={styles.currentFeaturesTitle}>
+            Your Active Features ({features.length})
+          </Text>
+          <View style={styles.featuresList}>
+            {features.map((feature, idx) => (
+              <View key={idx} style={styles.currentFeatureItem}>
+                <Text style={styles.currentFeatureIcon}>✓</Text>
+                <View style={styles.currentFeatureContent}>
+                  <Text style={styles.currentFeatureName}>{feature.feature_name}</Text>
+                  <Text style={styles.currentFeatureSource}>
+                    {feature.source === 'subscription' && '(Subscription)'}
+                    {feature.source === 'admin_override' && '(Admin Grant)'}
+                    {feature.source === 'feature_grant' && '(Special Access)'}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
 
       {/* Premium Features Overview */}
       <View style={styles.benefitsSection}>
@@ -316,6 +349,47 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     color: COLORS.textSecondary,
     textAlign: 'center',
+  },
+  currentFeaturesSection: {
+    padding: SPACING.lg,
+    backgroundColor: COLORS.backgroundSecondary,
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.lg,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  currentFeaturesTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: FONT_WEIGHTS.bold as any,
+    color: COLORS.primary,
+    marginBottom: SPACING.md,
+  },
+  featuresList: {
+    gap: SPACING.xs,
+  },
+  currentFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  },
+  currentFeatureIcon: {
+    fontSize: FONT_SIZES.lg,
+    color: COLORS.primary,
+  },
+  currentFeatureContent: {
+    flex: 1,
+  },
+  currentFeatureName: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.semibold as any,
+    color: COLORS.text,
+  },
+  currentFeatureSource: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textMuted,
+    marginTop: 2,
   },
   benefitsSection: {
     padding: SPACING.lg,

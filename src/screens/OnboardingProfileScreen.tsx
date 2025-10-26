@@ -118,7 +118,15 @@ export const OnboardingProfileScreen: React.FC = () => {
 
       // Create or update profile (upsert to handle existing profiles)
       console.log('Upserting profile into database...');
-      const { error: profileError } = await supabase
+      console.log('Profile data:', {
+        id: user.id,
+        display_name: displayName.trim(),
+        date_of_birth: dateOfBirth,
+        city,
+        country
+      });
+
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
@@ -129,14 +137,16 @@ export const OnboardingProfileScreen: React.FC = () => {
           country,
         }, {
           onConflict: 'id'
-        });
+        })
+        .select();
 
       if (profileError) {
         console.error('Profile creation error:', profileError);
+        console.error('Error details:', JSON.stringify(profileError, null, 2));
         throw profileError;
       }
 
-      console.log('Profile created/updated successfully');
+      console.log('Profile created/updated successfully:', profileData);
 
       // Upload photo if provided
       if (photoUri) {
@@ -151,8 +161,12 @@ export const OnboardingProfileScreen: React.FC = () => {
       }
 
       // Refresh profile in context
-      console.log('Refreshing profile...');
+      console.log('Refreshing profile in context...');
       await refreshProfile();
+      console.log('Profile refresh complete');
+
+      // Small delay to ensure context is updated
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       console.log('Profile setup complete, navigating to MainTabs');
       // Navigate to main app

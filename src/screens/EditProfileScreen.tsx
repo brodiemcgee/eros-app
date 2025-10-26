@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert, Switch } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert, Switch, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES, SHADOWS } from '../utils/theme';
-import { updateProfile, getUserTribes, setUserTribes } from '../services/profiles';
+import { updateProfile, getUserTribes, setUserTribes, addProfilePhoto } from '../services/profiles';
 import { TribeSelector } from '../components/TribeSelector';
 import { BodyHair, HIVStatus, Position, Smoking, Drinking } from '../types/database';
+import { useFeature } from '../hooks/useFeature';
+import { FEATURES, FREE_LIMITS } from '../constants/features';
+import { pickImage, uploadProfilePhoto } from '../services/imageUpload';
 
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const { profile, refreshProfile } = useAuth();
+
+  // Feature gate
+  const hasUnlimitedPhotos = useFeature(FEATURES.UNLIMITED_PHOTOS);
 
   // Basic info
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
@@ -96,6 +102,42 @@ export const EditProfileScreen: React.FC = () => {
     }
   };
 
+  const handleAddPhoto = async () => {
+    if (!profile) return;
+
+    // Check photo limit for free users
+    if (!hasUnlimitedPhotos) {
+      const photoCount = profile.photos?.length || 0;
+
+      if (photoCount >= FREE_LIMITS.MAX_PHOTOS) {
+        Alert.alert(
+          'Photo Limit Reached',
+          `Free users can upload up to ${FREE_LIMITS.MAX_PHOTOS} photos. You currently have ${photoCount}. Upgrade to Premium for unlimited photos.`,
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+    }
+
+    try {
+      const imageUri = await pickImage();
+      if (!imageUri) return;
+
+      setLoading(true);
+
+      const photoCount = profile.photos?.length || 0;
+      const { url } = await uploadProfilePhoto(profile.id, imageUri, photoCount);
+      await addProfilePhoto(profile.id, url, photoCount, photoCount === 0);
+
+      await refreshProfile();
+      Alert.alert('Success', 'Photo added');
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      Alert.alert('Error', 'Failed to upload photo');
+    }
+  };
+
   const renderPicker = (
     label: string,
     value: string | null,
@@ -163,6 +205,37 @@ export const EditProfileScreen: React.FC = () => {
           placeholder="Tell us about yourself..."
           placeholderTextColor={COLORS.textMuted}
         />
+
+        {/* Photos */}
+        <View style={styles.photosHeader}>
+          <Text style={styles.sectionTitle}>Photos</Text>
+          {!hasUnlimitedPhotos && (
+            <Text style={styles.photoLimit}>
+              {profile?.photos?.length || 0}/{FREE_LIMITS.MAX_PHOTOS}
+            </Text>
+          )}
+        </View>
+
+        <View style={styles.photosGrid}>
+          {profile?.photos?.map((photo, index) => (
+            <View key={photo.id} style={styles.photoThumbnail}>
+              <Image source={{ uri: photo.photo_url }} style={styles.photoImage} />
+              {photo.is_primary && <Text style={styles.primaryBadge}>Primary</Text>}
+            </View>
+          ))}
+          <TouchableOpacity
+            style={styles.addPhotoButton}
+            onPress={handleAddPhoto}
+            disabled={loading || (!hasUnlimitedPhotos && (profile?.photos?.length || 0) >= FREE_LIMITS.MAX_PHOTOS)}
+          >
+            <Text style={styles.addPhotoIcon}>+</Text>
+            <Text style={styles.addPhotoText}>
+              {!hasUnlimitedPhotos && (profile?.photos?.length || 0) >= FREE_LIMITS.MAX_PHOTOS
+                ? '👑 Premium'
+                : 'Add Photo'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Physical Attributes */}
         <Text style={styles.sectionTitle}>Physical Attributes</Text>
@@ -446,5 +519,66 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.background,
+  },
+  photosHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: SPACING.md,
+  },
+  photoLimit: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.primary,
+    fontWeight: FONT_WEIGHTS.semibold as any,
+  },
+  photosGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+  },
+  photoThumbnail: {
+    width: 100,
+    height: 100,
+    borderRadius: BORDER_RADIUS.md,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  photoImage: {
+    width: '100%',
+    height: '100%',
+  },
+  primaryBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    backgroundColor: COLORS.primary,
+    color: COLORS.background,
+    fontSize: FONT_SIZES.xs,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.sm,
+    fontWeight: FONT_WEIGHTS.bold as any,
+  },
+  addPhotoButton: {
+    width: 100,
+    height: 100,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.backgroundSecondary,
+  },
+  addPhotoIcon: {
+    fontSize: FONT_SIZES.xxxl,
+    color: COLORS.textMuted,
+    marginBottom: SPACING.xs,
+  },
+  addPhotoText: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textMuted,
+    textAlign: 'center',
   },
 });

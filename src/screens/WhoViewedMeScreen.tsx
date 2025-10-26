@@ -16,12 +16,15 @@ import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES
 import { ProfileWithPhotos } from '../types/database';
 import { getProfileViewers } from '../services/profiles';
 import { calculateAge, formatRelativeTime } from '../utils/helpers';
+import { useFeature } from '../hooks/useFeature';
+import { FEATURES } from '../constants/features';
 
 type WhoViewedMeNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const WhoViewedMeScreen: React.FC = () => {
   const navigation = useNavigation<WhoViewedMeNavigationProp>();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const hasWhoViewedMe = useFeature(FEATURES.WHO_VIEWED_ME);
 
   const [viewers, setViewers] = useState<ProfileWithPhotos[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,8 +36,8 @@ export const WhoViewedMeScreen: React.FC = () => {
   const loadViewers = async () => {
     if (!user) return;
 
-    // Check if user has premium
-    if (!profile?.is_premium) {
+    // Check if user has "who_viewed_me" feature
+    if (!hasWhoViewedMe) {
       setLoading(false);
       return;
     }
@@ -79,7 +82,7 @@ export const WhoViewedMeScreen: React.FC = () => {
     );
   }
 
-  if (!profile?.is_premium) {
+  if (!hasWhoViewedMe) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -96,7 +99,10 @@ export const WhoViewedMeScreen: React.FC = () => {
           <Text style={styles.premiumText}>
             See who's checking out your profile! Upgrade to premium to view your profile visitors.
           </Text>
-          <TouchableOpacity style={styles.upgradeButton}>
+          <TouchableOpacity
+            style={styles.upgradeButton}
+            onPress={() => navigation.navigate('Subscription' as any)}
+          >
             <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
           </TouchableOpacity>
         </View>

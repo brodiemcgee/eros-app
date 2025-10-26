@@ -16,12 +16,17 @@ import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, FONT_FAMILIES
 import { ProfileWithPhotos } from '../types/database';
 import { getFavorites } from '../services/profiles';
 import { calculateAge } from '../utils/helpers';
+import { useFeature } from '../hooks/useFeature';
+import { FEATURES, FREE_LIMITS } from '../constants/features';
 
 type FavoritesScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const FavoritesScreen: React.FC = () => {
   const navigation = useNavigation<FavoritesScreenNavigationProp>();
   const { user } = useAuth();
+
+  // Feature gate
+  const hasUnlimitedFavorites = useFeature(FEATURES.UNLIMITED_FAVORITES);
 
   const [favorites, setFavorites] = useState<ProfileWithPhotos[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,6 +87,11 @@ export const FavoritesScreen: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Favorites</Text>
+        {!hasUnlimitedFavorites && favorites.length > 0 && (
+          <Text style={styles.limitText}>
+            {favorites.length}/{FREE_LIMITS.MAX_FAVORITES}
+          </Text>
+        )}
       </View>
 
       <FlatList
@@ -118,12 +128,20 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     paddingTop: SPACING.xl,
     backgroundColor: COLORS.background,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: FONT_SIZES.xxxl, // 28px like Explore
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.text,
     fontFamily: FONT_FAMILIES.serif, // Serif for headers
+  },
+  limitText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.primary,
+    fontWeight: FONT_WEIGHTS.semibold as any,
   },
   gridContainer: {
     padding: SPACING.md,

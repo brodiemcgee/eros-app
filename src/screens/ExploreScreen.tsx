@@ -19,6 +19,11 @@ import { ProfileWithDistance } from '../types/database';
 import { getNearbyProfiles, updateOnlineStatus } from '../services/profiles';
 import { getCurrentLocation } from '../services/location';
 import { calculateAge, formatDistance } from '../utils/helpers';
+import { VerifiedBadge } from '../components/VerifiedBadge';
+import { VerificationPromptBanner } from '../components/VerificationPromptBanner';
+import { useFeature } from '../hooks/useFeature';
+import { FEATURES } from '../constants/features';
+import { Alert } from 'react-native';
 
 type ExploreScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -31,12 +36,20 @@ export const ExploreScreen: React.FC = () => {
   const navigation = useNavigation<ExploreScreenNavigationProp>();
   const { user, profile } = useAuth();
 
+  // Feature gates
+  const hasFreshFacesFilter = useFeature(FEATURES.FRESH_FACES_FILTER);
+  const hasOnlineFilter = useFeature(FEATURES.ONLINE_ONLY_FILTER);
+  const hasCascadeView = useFeature(FEATURES.CASCADE_VIEW);
+
   const [allProfiles, setAllProfiles] = useState<ProfileWithDistance[]>([]);
   const [profiles, setProfiles] = useState<ProfileWithDistance[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  const showVerificationPrompt = !profile?.is_verified && !bannerDismissed;
 
   const loadProfiles = useCallback(async () => {
     if (!user || !profile) return;
@@ -92,6 +105,25 @@ export const ExploreScreen: React.FC = () => {
   };
 
   const handleFilterModeChange = (mode: FilterMode) => {
+    // Check permissions for premium filters
+    if (mode === 'freshFaces' && !hasFreshFacesFilter) {
+      Alert.alert(
+        'Premium Feature',
+        'Fresh Faces filter is a premium feature. Upgrade to see new users from the last 7 days.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    if (mode === 'online' && !hasOnlineFilter) {
+      Alert.alert(
+        'Premium Feature',
+        'Online Only filter is a premium feature. Upgrade to see only users who are currently online.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     setFilterMode(mode);
     applyFilter(allProfiles, mode);
   };
@@ -147,6 +179,7 @@ export const ExploreScreen: React.FC = () => {
             <Text style={styles.profileName} numberOfLines={1}>
               {item.display_name}
             </Text>
+            {item.is_verified && <VerifiedBadge size="small" />}
             {item.is_online && <View style={styles.onlineDot} />}
           </View>
           <Text style={styles.profileAge}>{age} years</Text>
@@ -175,9 +208,22 @@ export const ExploreScreen: React.FC = () => {
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.viewModeButton}
-            onPress={() => setViewMode(viewMode === 'grid' ? 'cascade' : 'grid')}
+            onPress={() => {
+              if (viewMode === 'grid' && !hasCascadeView) {
+                Alert.alert(
+                  'Premium Feature',
+                  'Cascade view is a premium feature. Upgrade to unlock the enhanced list view.',
+                  [{ text: 'OK' }]
+                );
+                return;
+              }
+              setViewMode(viewMode === 'grid' ? 'cascade' : 'grid');
+            }}
           >
-            <Text style={styles.viewModeIcon}>{viewMode === 'grid' ? '☰' : '⊞'}</Text>
+            <Text style={styles.viewModeIcon}>
+              {viewMode === 'grid' ? '☰' : '⊞'}
+              {!hasCascadeView && ' 👑'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.filterButton}
@@ -187,6 +233,16 @@ export const ExploreScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Verification Prompt Banner */}
+      {showVerificationPrompt && (
+        <View style={styles.bannerContainer}>
+          <VerificationPromptBanner
+            variant="compact"
+            onDismiss={() => setBannerDismissed(true)}
+          />
+        </View>
+      )}
 
       {/* Filter Mode Tabs */}
       <View style={styles.filterTabs}>
@@ -199,19 +255,35 @@ export const ExploreScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.filterTab, filterMode === 'freshFaces' && styles.filterTabActive]}
+          style={[
+            styles.filterTab,
+            filterMode === 'freshFaces' && styles.filterTabActive,
+            !hasFreshFacesFilter && styles.filterTabLocked,
+          ]}
           onPress={() => handleFilterModeChange('freshFaces')}
         >
-          <Text style={[styles.filterTabText, filterMode === 'freshFaces' && styles.filterTabTextActive]}>
-            ✨ Fresh Faces
+          <Text style={[
+            styles.filterTabText,
+            filterMode === 'freshFaces' && styles.filterTabTextActive,
+            !hasFreshFacesFilter && styles.filterTabTextLocked,
+          ]}>
+            ✨ Fresh Faces {!hasFreshFacesFilter && '👑'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.filterTab, filterMode === 'online' && styles.filterTabActive]}
+          style={[
+            styles.filterTab,
+            filterMode === 'online' && styles.filterTabActive,
+            !hasOnlineFilter && styles.filterTabLocked,
+          ]}
           onPress={() => handleFilterModeChange('online')}
         >
-          <Text style={[styles.filterTabText, filterMode === 'online' && styles.filterTabTextActive]}>
-            🟢 Online
+          <Text style={[
+            styles.filterTabText,
+            filterMode === 'online' && styles.filterTabTextActive,
+            !hasOnlineFilter && styles.filterTabTextLocked,
+          ]}>
+            🟢 Online {!hasOnlineFilter && '👑'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -294,6 +366,11 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: FONT_SIZES.lg,
   },
+  bannerContainer: {
+    paddingHorizontal: SPACING.md,
+    paddingBottom: SPACING.sm,
+    backgroundColor: COLORS.background,
+  },
   filterTabs: {
     flexDirection: 'row',
     backgroundColor: COLORS.background,
@@ -322,6 +399,12 @@ const styles = StyleSheet.create({
   filterTabTextActive: {
     color: COLORS.background, // Stay white
     fontWeight: FONT_WEIGHTS.semibold as any,
+  },
+  filterTabLocked: {
+    opacity: 0.6,
+  },
+  filterTabTextLocked: {
+    opacity: 0.7,
   },
   gridContainer: {
     padding: SPACING.md,

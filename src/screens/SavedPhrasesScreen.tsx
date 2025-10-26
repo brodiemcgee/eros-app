@@ -19,10 +19,15 @@ import {
   updateSavedPhrase,
   deleteSavedPhrase,
 } from '../services/savedPhrases';
+import { useFeature } from '../hooks/useFeature';
+import { FEATURES } from '../constants/features';
 
 export const SavedPhrasesScreen: React.FC = () => {
   const navigation = useNavigation();
   const { user } = useAuth();
+
+  // Feature gate
+  const hasSavedPhrases = useFeature(FEATURES.SAVED_PHRASES);
 
   const [phrases, setPhrases] = useState<SavedPhrase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,6 +146,34 @@ export const SavedPhrasesScreen: React.FC = () => {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  // Show upgrade prompt if user doesn't have the feature
+  if (!hasSavedPhrases) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backButton}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Saved Phrases</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.upgradeContainer}>
+          <Text style={styles.upgradeIcon}>👑</Text>
+          <Text style={styles.upgradeTitle}>Premium Feature</Text>
+          <Text style={styles.upgradeText}>
+            Saved Phrases is a premium feature. Upgrade to Premium to save quick replies for common messages.
+          </Text>
+          <TouchableOpacity
+            style={styles.upgradeButton}
+            onPress={() => navigation.navigate('Subscription' as never)}
+          >
+            <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -340,6 +373,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addButtonText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.bold as any,
+    color: COLORS.background,
+  },
+  upgradeContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xxl,
+  },
+  upgradeIcon: {
+    fontSize: 64,
+    marginBottom: SPACING.lg,
+  },
+  upgradeTitle: {
+    fontSize: FONT_SIZES.xxl,
+    fontWeight: FONT_WEIGHTS.bold as any,
+    color: COLORS.text,
+    marginBottom: SPACING.md,
+  },
+  upgradeText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: SPACING.xl,
+  },
+  upgradeButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.pill,
+  },
+  upgradeButtonText: {
     fontSize: FONT_SIZES.md,
     fontWeight: FONT_WEIGHTS.bold as any,
     color: COLORS.background,
